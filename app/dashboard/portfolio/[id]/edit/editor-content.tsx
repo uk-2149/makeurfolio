@@ -134,60 +134,53 @@ export function EditorContent() {
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Sidebar (Left) */}
-        <div className="w-full lg:w-48 shrink-0">
-          <EditorSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <div className="w-full lg:w-48 shrink-0 order-2 lg:order-1">
+          <div className="sticky top-32">
+            <EditorSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          </div>
         </div>
         
        {/* Main Content (Center) */}
-        <main className="flex-1 space-y-24 max-w-3xl">
-          <div id="section-profile" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Profile</h2>
+        <main className="flex-1 space-y-12 max-w-3xl pb-32 order-3 lg:order-2">
+          <div id="section-profile" className="scroll-mt-28">
             <ProfileSection />
           </div>
           
-          <div id="section-social" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Social Links</h2>
+          <div id="section-social" className="scroll-mt-28">
             <SocialSection />
           </div>
           
-          <div id="section-experience" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Experience</h2>
+          <div id="section-experience" className="scroll-mt-28">
             <ExperienceSection />
           </div>
 
-          <div id="section-education" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Education</h2>
+          <div id="section-education" className="scroll-mt-28">
             <EducationSection />
           </div>
           
-          <div id="section-skills" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Skills</h2>
+          <div id="section-skills" className="scroll-mt-28">
             <SkillsSection />
           </div>
 
-          <div id="section-projects" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Projects</h2>
+          <div id="section-projects" className="scroll-mt-28">
             <ProjectsSection />
           </div>
           
-          <div id="section-certifications" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Certifications</h2>
+          <div id="section-certifications" className="scroll-mt-28">
             <CertificationsSection />
           </div>
 
-          <div id="section-achievements" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">Achievements</h2>
+          <div id="section-achievements" className="scroll-mt-28">
             <AchievementsSection />
           </div>
           
-          <div id="section-seo" className="scroll-mt-28 min-h-[50vh]">
-            <h2 className="text-xl font-semibold mb-6">SEO & Meta</h2>
+          <div id="section-seo" className="scroll-mt-28">
             <SEOSection />
           </div>
         </main>
 
         {/* Themes Panel (Right) */}
-        <div className="w-full lg:w-64 shrink-0">
+        <div className="w-full lg:w-64 shrink-0 order-1 lg:order-3 mb-8 lg:mb-0">
           <div className="sticky top-32">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-secondary mb-4">Themes</h2>
             {/* The ThemeSelector component will go here */}

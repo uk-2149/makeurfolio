@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { useEditor } from "./editor-context";
-import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { EditorSwitch } from "./editor-switch";
 
 export function ExperienceSection() {
   const { portfolio, updateField } = useEditor();
@@ -53,22 +54,20 @@ export function ExperienceSection() {
   return (
 
         <div className="space-y-6">
-      <div className="flex items-center justify-between pb-2 border-b border-border/40">
-        <p className="text-sm text-secondary">Manage your professional work experience.</p>
-        <button
-          onClick={() => updateField("showExperience", !portfolio.showExperience)}
-          className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-md transition-colors ${
-            portfolio.showExperience 
-              ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" 
-              : "bg-input-bg text-secondary hover:bg-border/60"
-          }`}
-        >
-          {portfolio.showExperience ? (
-            <><Eye className="w-3.5 h-3.5" /> Visible</>
-          ) : (
-            <><EyeOff className="w-3.5 h-3.5" /> Hidden</>
-          )}
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground mb-1">Experience</h2>
+          <p className="text-sm text-secondary">Manage your professional work experience.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`text-sm font-medium ${portfolio.showExperience ? 'text-foreground' : 'text-secondary/60'}`}>
+            {portfolio.showExperience ? 'Visible' : 'Hidden'}
+          </span>
+          <EditorSwitch 
+            checked={portfolio.showExperience} 
+            onChange={(v) => updateField("showExperience", v)} 
+          />
+        </div>
       </div>
 
       {experiences.map((exp: any) => {

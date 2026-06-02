@@ -10,6 +10,10 @@ export function SEOSection() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-foreground mb-1">SEO & Meta</h2>
+        <p className="text-sm text-secondary">Manage your search engine optimization settings.</p>
+      </div>
       <div className="bg-input-bg border border-border/40 rounded-xl p-6">
         <div className="space-y-6">
           <div className="space-y-2">

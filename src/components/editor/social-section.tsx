@@ -62,22 +62,25 @@ export function SocialSection() {
   };
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-foreground mb-1">Social Links</h2>
+        <p className="text-sm text-secondary">Manage your online presence and external links.</p>
+      </div>
       {socialLinks.map((link: any, index: number) => {
         const Icon = getSocialIconComponent(link.icon);
         return (
           <div key={index} className={`bg-input-bg border rounded-xl p-4 transition-all ${!link.visible ? 'opacity-60 border-dashed border-border/40' : 'border-border/40'}`}>
-            <div className="flex gap-4 items-start">
-              <div className="flex flex-col gap-1 items-center justify-center pt-2 text-secondary/40">
+            <div className="flex gap-4 items-center">
+              <div className="flex flex-col gap-1 items-center justify-center text-secondary/40">
                 <button disabled={index === 0} onClick={() => moveUp(index)} className="hover:text-foreground disabled:opacity-20">↑</button>
                 <GripVertical className="w-4 h-4 cursor-grab active:cursor-grabbing" />
                 <button disabled={index === socialLinks.length - 1} onClick={() => moveDown(index)} className="hover:text-foreground disabled:opacity-20">↓</button>
               </div>
               
               <div className="flex-1 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1 relative">
-                    <label className="text-xs font-medium text-foreground ml-1">Platform / Label</label>
-                    <div className="absolute left-3 top-[26px] text-secondary">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_2.5fr] gap-4">
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
                       <Icon className="w-4 h-4" />
                     </div>
                     <input
@@ -85,22 +88,21 @@ export function SocialSection() {
                       value={link.label || ""}
                       onChange={(e) => handleUpdate(index, "label", e.target.value)}
                       className="w-full pl-9 pr-3 py-2 bg-background border border-border/40 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-foreground/50 transition-shadow"
-                      placeholder="e.g. GitHub"
+                      placeholder="Platform (e.g. GitHub)"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-foreground ml-1">URL</label>
+                  <div>
                     <input
                       type="text"
                       value={link.url || ""}
                       onChange={(e) => handleUpdate(index, "url", e.target.value)}
                       className="w-full px-3 py-2 bg-background border border-border/40 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-foreground/50 transition-shadow"
-                      placeholder="https://..."
+                      placeholder="URL (https://...)"
                     />
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 pt-5">
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={() => handleUpdate(index, "visible", !link.visible)}
                   className="p-2 text-secondary hover:text-foreground hover:bg-border/40 rounded-lg transition-colors"

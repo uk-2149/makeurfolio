@@ -36,7 +36,7 @@ import {
 
 // Modals for Create Flow
 import { AuthModal } from "@/src/components/auth-modal";
-import { NamingModal } from "@/src/components/naming-modal";
+import { CreatePortfolioModal } from "@/src/components/create-portfolio-modal";
 import { GenerationOverlay } from "@/src/components/generation-overlay";
 
 interface Portfolio {
@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
   // Generation Modal States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isNamingModalOpen, setIsNamingModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
 
   // Initialize theme, session, and fetch portfolios on mount
@@ -162,20 +162,15 @@ export default function DashboardPage() {
     if (!session?.user) {
       setIsAuthModalOpen(true);
     } else {
-      setIsNamingModalOpen(true);
+      setIsCreateModalOpen(true);
     }
   };
 
-  const executeRealGeneration = async (portfolioName: string) => {
-    setIsNamingModalOpen(false);
-
-    // 1. Read state or stashed
-    const stashed = await restoreStashedState();
-    const finalGithubUser = stashed?.githubUsername || "";
-    const finalResumeFile = stashed?.resumeFile;
+  const executeRealGeneration = async (githubUsername: string, resumeFile: File | null, portfolioName: string) => {
+    setIsCreateModalOpen(false);
 
     // 2. Set the active metadata in localStorage first
-    setActiveGenerationMetadata(!!finalGithubUser, !!finalResumeFile);
+    setActiveGenerationMetadata(!!githubUsername, !!resumeFile);
 
     // 3. Pre-generate a unique generation ID on the client side
     const clientGenId = "gen-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9);
@@ -185,8 +180,8 @@ export default function DashboardPage() {
     setActiveGenerationId(clientGenId);
 
     const formData = new FormData();
-    if (finalGithubUser) formData.append("githubUsername", finalGithubUser);
-    if (finalResumeFile) formData.append("resume", finalResumeFile);
+    if (githubUsername) formData.append("githubUsername", githubUsername);
+    if (resumeFile) formData.append("resume", resumeFile);
     formData.append("portfolioName", portfolioName);
     formData.append("generationId", clientGenId);
 
@@ -265,14 +260,14 @@ export default function DashboardPage() {
         }}
         onSuccess={() => {
           setIsAuthModalOpen(false);
-          setIsNamingModalOpen(true);
+          setIsCreateModalOpen(true);
         }}
       />
 
-      <NamingModal 
-        isOpen={isNamingModalOpen}
+      <CreatePortfolioModal 
+        isOpen={isCreateModalOpen}
         onClose={() => {
-          setIsNamingModalOpen(false);
+          setIsCreateModalOpen(false);
           clearStashedState();
         }}
         onSubmit={executeRealGeneration}

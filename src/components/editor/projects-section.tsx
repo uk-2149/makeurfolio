@@ -50,6 +50,10 @@ export function ProjectsSection() {
 
   return (
     <div className="space-y-4">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-foreground mb-1">Projects</h2>
+        <p className="text-sm text-secondary">Manage your portfolio projects and showcase your best work.</p>
+      </div>
       {projects.map((proj: any) => {
         const isEditing = editingId === proj.id;
         

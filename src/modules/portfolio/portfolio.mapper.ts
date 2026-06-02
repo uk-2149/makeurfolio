@@ -183,16 +183,25 @@ export function mapToPrismaPayload(
     },
 
     socialLinks: {
-      create: (profile.socialLinks ?? []).map((link, i) => {
-        const normalized = normalizeSocialLink(link.url);
-        return {
-          label: normalized.label,
-          url: normalized.url,
-          icon: normalized.icon,
-          sortOrder: i,
-          visible: true,
-        };
-      }),
+      create: (() => {
+        const uniqueUrls = new Set<string>();
+        const links: any[] = [];
+        (profile.socialLinks ?? []).forEach((link) => {
+          const normalized = normalizeSocialLink(link.url);
+          const urlLower = normalized.url.toLowerCase();
+          if (!uniqueUrls.has(urlLower)) {
+            uniqueUrls.add(urlLower);
+            links.push({
+              label: normalized.label,
+              url: normalized.url,
+              icon: normalized.icon,
+              sortOrder: links.length,
+              visible: true,
+            });
+          }
+        });
+        return links;
+      })(),
     },
 
     projects: {

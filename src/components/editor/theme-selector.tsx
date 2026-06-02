@@ -15,7 +15,7 @@ export function ThemeSelector() {
   if (!portfolio) return null;
   const currentThemeId = portfolio.themeId || "minimal-editorial";
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-4">
       {THEMES.map((theme) => {
         const isSelected = currentThemeId === theme.id;
         
@@ -52,7 +52,7 @@ export function ThemeSelector() {
           </button>
         );
       })}
-      <div className="pt-4 text-center">
+      <div className="pt-4 text-center col-span-full">
         <span className="text-xs text-secondary/40 font-medium">More themes coming soon...</span>
       </div>
     </div>

@@ -10,6 +10,10 @@ export function ProfileSection() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-foreground mb-1">Profile</h2>
+        <p className="text-sm text-secondary">Manage your personal information and overview.</p>
+      </div>
       <div className="bg-input-bg border border-border/40 rounded-xl p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">

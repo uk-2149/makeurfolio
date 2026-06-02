@@ -28,7 +28,7 @@ CRITICAL RULES:
 DATA PRIORITY:
 - PREFER RESUME for: fullName, email, phone, education, work experience, certifications
 - PREFER GITHUB for: projects, technical skills, avatarUrl
-- BIO GENERATION: Always generate a detailed personal bio. If both GitHub and Resume data are provided, the bio MUST be primarily generated from the RESUME's professional experience and background, only enriched slightly by GitHub.
+- BIO GENERATION: Always generate a detailed personal bio. If both GitHub and Resume data are provided, you MUST heavily prioritize the Resume for the bio. Use the Resume's professional summary, objective, and experience as the primary source for the bio, and only sprinkle in GitHub data for extra technical context.
 - SOCIAL LINKS: Aggressively hunt for and extract ANY professional, personal, or public URLs from both the Resume and GitHub profile (including READMEs). This includes GitHub, LinkedIn, Twitter/X, Telegram, YouTube, Medium, Dev.to, Hashnode, Discord, or Personal Blogs. Output only the raw URL string. Normalization will happen on the backend.
 - If both sources mention the same project, merge them into one entry. Do NOT duplicate.
 

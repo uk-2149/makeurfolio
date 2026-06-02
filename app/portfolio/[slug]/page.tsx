@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/src/lib/prisma";
 import { getSocialIconComponent } from "@/src/lib/social-utils";
-import { ExternalLink, MapPin, Mail, Briefcase, Calendar, ChevronRight, FileText } from "lucide-react";
+import { ExternalLink, MapPin, Mail, Briefcase, Calendar, ChevronRight, FileText, Code2 as GithubIcon } from "lucide-react";
 import React from "react";
 import Link from "next/link";
 interface PortfolioPageProps {
@@ -26,7 +26,7 @@ async function getPortfolio(slug: string) {
   }
   // Record a view asynchronously
   prisma.portfolioView.create({
-    data: { portfolioId: portfolio.id, source: "direct" },
+    data: { portfolioId: portfolio.id },
   }).catch(() => {});
   return portfolio;
 }
@@ -75,6 +75,15 @@ export default async function PortfolioPage({ params }: PortfolioPageProps) {
               </a>
             )}
           </div>
+          {/* ABOUT */}
+          {portfolio.bio && (
+            <div className="prose prose-gray prose-p:leading-relaxed max-w-none text-gray-600">
+              {portfolio.bio.split("\n").map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+            </div>
+          )}
+
           {/* Social Links & Resume */}
           <div className="flex flex-wrap gap-3 pt-4">
             {portfolio.socialLinks.map((link) => {
@@ -121,7 +130,7 @@ export default async function PortfolioPage({ params }: PortfolioPageProps) {
                       <div className="flex gap-2 shrink-0">
                         {project.githubUrl && (
                           <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
-                            <getSocialIconComponent iconName="github" className="w-4 h-4" />
+                            <GithubIcon className="w-4 h-4" />
                           </a>
                         )}
                         {project.liveUrl && (
@@ -136,9 +145,9 @@ export default async function PortfolioPage({ params }: PortfolioPageProps) {
                         {project.description}
                       </p>
                     )}
-                    {project.techStack.length > 0 && (
+                    {Array.isArray(project.techStack) && project.techStack.length > 0 && (
                       <div className="flex flex-wrap gap-2 pt-2">
-                        {project.techStack.map((tech, i) => (
+                        {project.techStack.map((tech: any, i: number) => (
                           <span key={i} className="px-2.5 py-1 bg-gray-50 border border-gray-100 text-gray-600 text-xs font-medium rounded-md">
                             {tech}
                           </span>
@@ -147,17 +156,6 @@ export default async function PortfolioPage({ params }: PortfolioPageProps) {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {/* ABOUT */}
-        {portfolio.bio && (
-          <section className="space-y-6">
-            <h2 className="text-2xl font-heading font-bold text-gray-900">About</h2>
-            <div className="prose prose-gray prose-p:leading-relaxed max-w-none text-gray-600">
-              {portfolio.bio.split("\n").map((paragraph, i) => (
-                <p key={i}>{paragraph}</p>
               ))}
             </div>
           </section>

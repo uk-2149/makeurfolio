@@ -37,7 +37,12 @@ export function SkillsSection() {
   };
 
   return (
-    <div className="bg-input-bg border border-border/40 rounded-xl p-6">
+    <div className="space-y-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-foreground mb-1">Skills</h2>
+        <p className="text-sm text-secondary">Manage your technical skills and core competencies.</p>
+      </div>
+      <div className="bg-input-bg border border-border/40 rounded-xl p-6">
       <div className="space-y-6">
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">Add Skills</label>
@@ -80,6 +85,7 @@ export function SkillsSection() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }
