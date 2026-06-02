@@ -397,3 +397,28 @@ A complete redesign of the workspace (`app/dashboard/page.tsx`) transforms it fr
 ### 5. Future Extension Points
 * **Settings & Analytics Actions**: Redesigned card details include design-ready disabled placeholder links (`Settings`, `Analytics`) to support seamless integration in future releases.
 * **Multi-Domain Custom Mapping**: The monospace link formatting is isolated, preparing the way for custom domain configurations (e.g. `domain.com` map hooks).
+
+---
+
+## Portfolio Editor Architecture
+
+A premium, Notion/Linear-inspired editor interface (`app/dashboard/portfolio/[id]/edit`) designed to manage the content of a generated portfolio without feeling like a generic CRUD admin panel.
+
+### 1. Editor UI/UX Principles
+* **Sticky Header**: Houses the context-aware state indicators (Saved/Unsaved changes), Discard Changes button, Save Changes button (with loading states), and a quick link to Preview the live portfolio.
+* **Sidebar Navigation**: Left-hand sticky sidebar with smooth scroll-spy integration for quick navigation across long content sections (Profile, Social, Experience, Education, Skills, Projects, Certifications, Achievements, SEO).
+* **Focused Sections**: Modular editor blocks designed with high-quality input states, focus rings, and clear layout. Relational lists (Experiences, Projects, etc.) utilize expandable inline-edit cards to prevent context switching and avoid complex modals.
+
+### 2. State Management & API Integration
+* **`EditorContext`**: A central React Context that manages:
+  * `initialData`: The source of truth fetched from the server.
+  * `formData`: The working draft.
+  * `hasUnsavedChanges`: Derived state (`JSON.stringify(initialData) !== JSON.stringify(formData)`).
+* **Save / Discard Mechanics**: 
+  * "Discard Changes" instantly reverts `formData` to `initialData`.
+  * "Save Changes" triggers the `PATCH` endpoint, updating the backend and then syncing `initialData` to the newly saved state.
+* **Unsaved Warnings**: A `beforeunload` event listener prevents users from accidentally closing the tab if `hasUnsavedChanges` is true.
+
+### 3. Security & Database Syncing
+* **Protected Routes**: Both `GET /api/portfolio/[id]/editor` and `PATCH /api/portfolio/[id]` enforce strict ownership. They verify that the requested portfolio's `userId` matches the authenticated `session.user.id`. Unauthorized access returns a `403 Forbidden`.
+* **Nested Writes**: The `PATCH` route handles relational updates (Experiences, Projects, Educations, Skills, Certifications, Achievements) by executing atomic `deleteMany` followed by `create` operations, ensuring the database stays perfectly synced with the client's working array state.

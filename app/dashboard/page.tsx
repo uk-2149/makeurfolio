@@ -18,7 +18,8 @@ import {
   LayoutTemplate,
   Globe,
   Settings,
-  BarChart3
+  BarChart3,
+  Edit3
 } from "lucide-react";
 import { authClient } from "@/src/lib/auth-client";
 import { 
@@ -458,17 +459,23 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Dynamic Action Buttons */}
-                  <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-border/40">
-                    {/* View Live */}
+                  <div className="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-border/40">
+                    <Link
+                      href={`/dashboard/portfolio/${p.id}/edit`}
+                      className="flex items-center justify-center gap-1.5 py-1.5 bg-foreground text-background hover:bg-foreground/90 rounded-lg text-xs font-medium transition-colors shadow-sm"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Edit
+                    </Link>
+                    
                     <Link
                       href={`/portfolio/${p.slug}`}
                       className="flex items-center justify-center gap-1.5 py-1.5 bg-input-bg text-foreground hover:bg-border/60 rounded-lg text-xs font-medium transition-colors"
                     >
-                      View Live
+                      View
                       <ExternalLink className="w-3 h-3 text-secondary" />
                     </Link>
 
-                    {/* Copy Link */}
                     <button
                       onClick={() => handleCopyLink(p.slug)}
                       className="flex items-center justify-center gap-1.5 py-1.5 bg-input-bg text-foreground hover:bg-border/60 rounded-lg text-xs font-medium transition-colors"
@@ -481,7 +488,7 @@ export default function DashboardPage() {
                       ) : (
                         <>
                           <Copy className="w-3 h-3 text-secondary" />
-                          <span>Copy Link</span>
+                          <span>Copy</span>
                         </>
                       )}
                     </button>

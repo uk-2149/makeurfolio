@@ -1,0 +1,216 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/src/lib/auth";
+import { prisma } from "@/src/lib/prisma";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: { code: "UNAUTHORIZED", message: "Unauthorized access", statusCode: 401 } 
+        },
+        { status: 401 }
+      );
+    }
+    
+    const resolvedParams = await params;
+    
+    if (!resolvedParams.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "VALIDATION_ERROR", message: "Portfolio ID is required", statusCode: 400 } },
+        { status: 400 }
+      );
+    }
+
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { id: resolvedParams.id },
+      include: {
+        experiences: { orderBy: { sortOrder: 'asc' } },
+        educations: { orderBy: { sortOrder: 'asc' } },
+        skills: true,
+        projects: { orderBy: { featuredOrder: 'asc' } },
+        certifications: { orderBy: { issueDate: 'desc' } },
+        achievements: { orderBy: { achievedAt: 'desc' } },
+      }
+    });
+
+    if (!portfolio) {
+      return NextResponse.json(
+        { success: false, error: { code: "NOT_FOUND", message: "Portfolio not found", statusCode: 404 } },
+        { status: 404 }
+      );
+    }
+
+    // Ownership verification
+    if (portfolio.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "FORBIDDEN", message: "You do not have permission to edit this portfolio", statusCode: 403 } },
+        { status: 403 }
+      );
+    }
+    
+    return NextResponse.json(
+      { success: true, data: portfolio },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching portfolio for editor:", error);
+    return NextResponse.json(
+      { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to fetch portfolio data", statusCode: 500 } },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized access", statusCode: 401 } },
+        { status: 401 }
+      );
+    }
+    
+    const resolvedParams = await params;
+    
+    if (!resolvedParams.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "VALIDATION_ERROR", message: "Portfolio ID is required", statusCode: 400 } },
+        { status: 400 }
+      );
+    }
+
+    // First check ownership
+    const existingPortfolio = await prisma.portfolio.findUnique({
+      where: { id: resolvedParams.id },
+      select: { userId: true }
+    });
+
+    if (!existingPortfolio) {
+      return NextResponse.json(
+        { success: false, error: { code: "NOT_FOUND", message: "Portfolio not found", statusCode: 404 } },
+        { status: 404 }
+      );
+    }
+
+    if (existingPortfolio.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "FORBIDDEN", message: "You do not have permission to edit this portfolio", statusCode: 403 } },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+
+    const {
+      experiences,
+      educations,
+      skills,
+      projects,
+      certifications,
+      achievements,
+      ...baseFields
+    } = body;
+
+    const updatedPortfolio = await prisma.portfolio.update({
+      where: { id: resolvedParams.id },
+      data: {
+        ...baseFields,
+        skills: skills ? {
+          deleteMany: {},
+          create: skills.map((s: any) => ({ 
+            name: s.name, 
+            category: s.category || "OTHER" 
+          }))
+        } : undefined,
+        experiences: experiences ? {
+          deleteMany: {},
+          create: experiences.map((e: any, index: number) => ({
+            company: e.company,
+            role: e.role,
+            location: e.location,
+            startDate: e.startDate ? new Date(e.startDate) : null,
+            endDate: e.endDate ? new Date(e.endDate) : null,
+            currentlyWorking: e.currentlyWorking || false,
+            description: e.description,
+            sortOrder: index,
+          }))
+        } : undefined,
+        projects: projects ? {
+          deleteMany: {},
+          create: projects.map((p: any, index: number) => ({
+            title: p.title,
+            description: p.description,
+            githubUrl: p.githubUrl,
+            liveUrl: p.liveUrl,
+            featured: p.featured || false,
+            featuredOrder: index,
+          }))
+        } : undefined,
+        educations: educations ? {
+          deleteMany: {},
+          create: educations.map((e: any, index: number) => ({
+            institution: e.institution,
+            degree: e.degree,
+            fieldOfStudy: e.fieldOfStudy,
+            startDate: e.startDate ? new Date(e.startDate) : null,
+            endDate: e.endDate ? new Date(e.endDate) : null,
+            description: e.description,
+            sortOrder: index,
+          }))
+        } : undefined,
+        certifications: certifications ? {
+          deleteMany: {},
+          create: certifications.map((c: any) => ({
+            title: c.title,
+            issuer: c.issuer,
+            issueDate: c.issueDate ? new Date(c.issueDate) : null,
+            credentialUrl: c.credentialUrl,
+          }))
+        } : undefined,
+        achievements: achievements ? {
+          deleteMany: {},
+          create: achievements.map((a: any) => ({
+            title: a.title,
+            description: a.description,
+            achievedAt: a.achievedAt ? new Date(a.achievedAt) : null,
+          }))
+        } : undefined,
+      },
+      include: {
+        skills: true,
+        experiences: { orderBy: { sortOrder: 'asc' } },
+        educations: { orderBy: { sortOrder: 'asc' } },
+        projects: { orderBy: { featuredOrder: 'asc' } },
+        certifications: { orderBy: { issueDate: 'desc' } },
+        achievements: { orderBy: { achievedAt: 'desc' } },
+      }
+    });
+    
+    return NextResponse.json(
+      { success: true, data: updatedPortfolio },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error updating portfolio:", error);
+    return NextResponse.json(
+      { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to update portfolio", statusCode: 500 } },
+      { status: 500 }
+    );
+  }
+}

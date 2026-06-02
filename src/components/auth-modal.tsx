@@ -8,9 +8,10 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  triggerSource?: "navbar" | "generation";
 }
 
-export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, onSuccess, triggerSource = "generation" }: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"initial" | "otp">("initial");
@@ -25,7 +26,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
     try {
       await signIn.social({
         provider: "google",
-        callbackURL: "/", // Returns to homepage where state is restored
+        callbackURL: triggerSource === "navbar" ? "/dashboard" : "/", // Returns to dashboard directly or homepage where state is restored
       });
     } catch (err) {
       console.error(err);

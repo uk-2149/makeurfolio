@@ -166,6 +166,9 @@ model Portfolio {
 
   summary String? @db.Text
 
+  metaTitle       String?
+  metaDescription String? @db.Text
+
   profileScore Int?
 
   lastGithubSync DateTime?

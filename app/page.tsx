@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { AuthModal } from "@/src/components/auth-modal";
 import { NamingModal } from "@/src/components/naming-modal";
 import { GenerationOverlay } from "@/src/components/generation-overlay";
@@ -90,6 +91,7 @@ const MOCK_PROFILES: Record<string, {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [session, setSession] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
   
@@ -101,6 +103,7 @@ export default function Home() {
   
   // Real Generation States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authTriggerSource, setAuthTriggerSource] = useState<"navbar" | "generation">("generation");
   const [isNamingModalOpen, setIsNamingModalOpen] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
 
@@ -196,6 +199,7 @@ export default function Home() {
     await stashGenerationState({ githubUsername: typedUser, resumeFile: resumeFile || undefined });
 
     if (!session?.user) {
+      setAuthTriggerSource("generation");
       setIsAuthModalOpen(true);
     } else {
       setIsNamingModalOpen(true);
@@ -264,9 +268,19 @@ export default function Home() {
               setIsAuthModalOpen(false);
               clearStashedState();
             }} 
-            onSuccess={() => {
+            triggerSource={authTriggerSource}
+            onSuccess={async () => {
               setIsAuthModalOpen(false);
-              setIsNamingModalOpen(true);
+              
+              // Immediately fetch updated session to refresh state and navbar dynamically
+              const res = await authClient.getSession();
+              setSession(res.data);
+
+              if (authTriggerSource === "navbar") {
+                router.push("/dashboard");
+              } else {
+                setIsNamingModalOpen(true);
+              }
             }} 
           />
           
@@ -342,7 +356,10 @@ export default function Home() {
             ) : (
               <>
                 <span 
-                  onClick={() => setIsAuthModalOpen(true)}
+                  onClick={() => {
+                    setAuthTriggerSource("navbar");
+                    setIsAuthModalOpen(true);
+                  }}
                   className="hidden sm:inline text-[13px] text-secondary hover:text-foreground cursor-pointer transition-colors duration-200"
                 >
                   Login
