@@ -21,3 +21,5 @@ export const PROGRESS_MAP: Record<GenerationStatus, number> = {
   [GenerationStatus.COMPLETED]: 100,
   [GenerationStatus.FAILED]: 100,
 };
+
+export type OnProgressCallback = (message: string, step?: string, progress?: number) => Promise<void>;

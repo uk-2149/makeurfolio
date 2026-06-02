@@ -13,6 +13,7 @@ const pdf = require("pdf-parse/lib/pdf-parse.js");
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const mammoth = require("mammoth");
 import type { ResumeParseResult } from "./resume.types";
+import type { OnProgressCallback } from "../generation/generation.types";
 
 const SERVICE = "ResumeParser";
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -27,8 +28,10 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
  */
 export async function parseResume(
   buffer: Buffer,
-  fileName?: string
+  fileName?: string,
+  onProgress?: OnProgressCallback
 ): Promise<ResumeParseResult> {
+  await onProgress?.(`Upload received: ${fileName || "document"}`, "Upload received", 30);
   logger.info(SERVICE, `Parsing resume...`, {
     fileName: fileName ?? "unknown",
     sizeBytes: buffer.length,
@@ -56,17 +59,31 @@ export async function parseResume(
     let numpages = 1;
 
     if (isDocx) {
+      await onProgress?.("Detected DOCX, extracting text...", "Parsing DOCX", 40);
       // Parse DOCX with Mammoth
       const result = await mammoth.extractRawText({ buffer });
       text = result.value.trim();
     } else {
-      // Parse PDF with pdf-parse
-      const result = await pdf(buffer);
-      text = result.text?.trim() || "";
-      numpages = result.numpages || 1;
+      await onProgress?.("Detected PDF, extracting text...", "Parsing PDF", 40);
+      // Parse PDF
+      // Note: pdf-parse sometimes warns about missing fonts or maps.
+      // We suppress console output globally during this call if needed,
+      // but native pdf-parse logs are usually on stderr.
+      const data = await pdf(buffer, {
+        max: 0, // no limit
+      });
+      text = data.text;
+      numpages = data.numpages;
     }
 
-    if (!text || text.length < 50) {
+    const cleanedText = text
+      .replace(/\n+/g, "\n")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    await onProgress?.(`Extracted ${cleanedText.length.toLocaleString()} characters of text.`, "Extracting text", 50);
+
+    if (!cleanedText || cleanedText.length < 50) {
       throw new ResumeParseError(
         "Resume appears to contain no readable text. It may be a scanned image.",
         { extractedLength: text?.length ?? 0, fileName: fileName ?? "unknown" }

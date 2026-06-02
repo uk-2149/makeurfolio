@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, RotateCcw, Loader2, ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Save, RotateCcw, Loader2, ExternalLink, Trash2, AlertTriangle } from "lucide-react";
 import { useEditor } from "@/src/components/editor/editor-context";
 import { EditorSidebar } from "@/src/components/editor/sidebar";
 import { ProfileSection } from "@/src/components/editor/profile-section";
@@ -26,7 +27,34 @@ export function EditorContent() {
     discardChanges 
   } = useEditor();
   
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState("profile");
+  
+  // Deletion States
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const executeDelete = async () => {
+    if (!portfolio?.id) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/editor/portfolio/${portfolio.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDeleteModalOpen(false);
+        router.push("/dashboard");
+      } else {
+        alert(data.error?.message || "Failed to delete portfolio");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error deleting portfolio");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Intersection Observer for scroll spy logic can be added here
   useEffect(() => {
@@ -100,6 +128,15 @@ export function EditorContent() {
             </Link>
             
             <button
+              onClick={() => setDeleteModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+              title="Delete Portfolio"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Delete</span>
+            </button>
+            
+            <button
               onClick={discardChanges}
               disabled={!hasUnsavedChanges || isSaving}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
@@ -132,7 +169,42 @@ export function EditorContent() {
         </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row gap-12">
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && portfolio && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-card-bg rounded-xl border border-border shadow-xl p-6">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-4">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Portfolio</h3>
+            <p className="text-sm text-secondary mb-6 leading-relaxed">
+              Are you sure you want to delete <span className="font-semibold text-foreground">{portfolio.name}</span>? This action cannot be undone and will permanently remove this portfolio from the internet.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-foreground hover:bg-input-bg transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDelete}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors flex items-center gap-2"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <><div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> Deleting...</>
+                ) : (
+                  <>Delete</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
         {/* Sidebar (Left) */}
         <div className="w-full lg:w-48 shrink-0 order-2 lg:order-1">
           <div className="sticky top-32">

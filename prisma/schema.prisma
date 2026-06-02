@@ -57,6 +57,10 @@ model PortfolioGeneration {
 
   errorMessage String? @db.Text
 
+  progress Int @default(0)
+  currentStep String?
+  activityLogs Json @default("[]")
+
   retryCount Int @default(0)
 
   startedAt DateTime @default(now())

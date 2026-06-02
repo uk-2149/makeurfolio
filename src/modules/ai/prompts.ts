@@ -28,7 +28,7 @@ CRITICAL RULES:
 DATA PRIORITY:
 - PREFER RESUME for: fullName, email, phone, education, work experience, certifications
 - PREFER GITHUB for: projects, technical skills, avatarUrl
-- BIO GENERATION: Always generate a detailed personal bio. If both GitHub and Resume data are provided, you MUST heavily prioritize the Resume for the bio. Use the Resume's professional summary, objective, and experience as the primary source for the bio, and only sprinkle in GitHub data for extra technical context.
+- BIO GENERATION: DO NOT simply copy the short GitHub "Bio". If a Resume is provided, you MUST write a comprehensive 3-4 sentence professional summary based entirely on the Resume's content. Only use the GitHub Bio if no Resume is provided.
 - SOCIAL LINKS: Aggressively hunt for and extract ANY professional, personal, or public URLs from both the Resume and GitHub profile (including READMEs). This includes GitHub, LinkedIn, Twitter/X, Telegram, YouTube, Medium, Dev.to, Hashnode, Discord, or Personal Blogs. Output only the raw URL string. Normalization will happen on the backend.
 - If both sources mention the same project, merge them into one entry. Do NOT duplicate.
 
@@ -146,7 +146,10 @@ export function buildUserPrompt(params: {
 
     parts.push("=== GITHUB PROFILE ===");
     parts.push(`Name: ${user.name ?? "N/A"}`);
-    parts.push(`Bio: ${user.bio ?? "N/A"}`);
+    const bioText = params.resumeText 
+      ? "[OMITTED: You MUST generate a comprehensive professional summary from the RESUME TEXT above instead of copying a short bio]" 
+      : (user.bio ?? "N/A");
+    parts.push(`Bio: ${bioText}`);
     parts.push(`Location: ${user.location ?? "N/A"}`);
     parts.push(`Company: ${user.company ?? "N/A"}`);
     parts.push(`Avatar: ${user.avatarUrl ?? "N/A"}`);

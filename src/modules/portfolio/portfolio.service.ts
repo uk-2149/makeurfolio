@@ -16,15 +16,18 @@ import type {
   PortfolioCreateInput,
   PortfolioWithRelations,
 } from "./portfolio.types";
+import type { OnProgressCallback } from "../generation/generation.types";
 
 const SERVICE = "PortfolioService";
 
 export async function createPortfolio(
-  input: PortfolioCreateInput
+  input: PortfolioCreateInput,
+  onProgress?: OnProgressCallback
 ): Promise<PortfolioWithRelations> {
   logger.info(SERVICE, "Creating portfolio...");
   logger.time("portfolio-creation");
 
+  await onProgress?.("Generating unique portfolio URL...", "Generating unique URL", 92);
   const baseSlug = generateBaseSlug(input.profile.personalInfo.fullName);
   let finalSlug = baseSlug;
   let counter = 1;
@@ -42,8 +45,10 @@ export async function createPortfolio(
 
   logger.info(SERVICE, `Generated unique slug: ${finalSlug}`);
 
+  await onProgress?.("Mapping data to database schema...", "Saving content", 95);
   const payload = mapToPrismaPayload(input, finalSlug);
 
+  await onProgress?.("Writing to database...", "Saving content", 98);
   const portfolio = await createPortfolioWithRelations(payload);
 
   logger.timeEnd(SERVICE, "portfolio-creation");

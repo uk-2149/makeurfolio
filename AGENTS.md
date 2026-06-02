@@ -49,9 +49,10 @@ makeurfolio implements a premium, high-intent generation UX integrated with robu
 * During prerendering, Server-Side Rendering (SSR) of hooks like `useSession` from `better-auth/react` can cause React hydration mismatches or prerender crashes (e.g., `useRef` null errors).
 * To resolve this, the client safely queries `authClient.getSession()` inside a mount-triggered `useEffect` callback, avoiding compile-time and runtime failures.
 
-### 3. Real-Time Non-Fake Progress Polling (`src/components/generation-overlay.tsx`)
+### 3. Premium Pipeline Generation UI (`src/components/generation-overlay.tsx`)
 * When a portfolio is being generated, the client polls the status route `/api/portfolio/generation/[id]` every 1.5 seconds.
-* To avoid cheesy fake progress indicators, progress updates reflect actual backend status transitions (`QUEUED` -> `FETCHING_GITHUB` -> `PARSING_RESUME` -> `GENERATING_PROFILE` -> `COMPLETED`/`FAILED`).
+* Instead of exposing low-level technical logs to the user, the UI categorizes the generation into 4 high-level stages: `Analyzing GitHub` -> `Understanding Resume` -> `Building Your Portfolio` -> `Finalizing Website`.
+* Progress indicators are dynamically calculated based on the active stage index, providing a smooth, premium visual experience without faking arbitrary percentages.
 * The active generation ID is persisted in `localStorage` so that a browser refresh or unexpected redirect doesn't lose the progress visual; the overlay instantly re-opens on reload to continue polling.
 
 ### 4. User Dashboard (`/dashboard`)
@@ -212,7 +213,11 @@ All API endpoints return consistent, structured JSON responses. Error responses 
     "data": {
       "generationId": "cuid-string",
       "status": "COMPLETED", // QUEUED | FETCHING_GITHUB | PARSING_RESUME | GENERATING_PROFILE | COMPLETED | FAILED
-      "progress": 100, // Numeric progress value (0, 25, 50, 75, 100)
+      "progress": 100, // Numeric progress value (0 to 100)
+      "currentStep": "Generating unique URL", // Granular step string
+      "activityLogs": [
+        { "timestamp": "2026-06-01T12:00:00Z", "message": "Fetching GitHub profile" }
+      ],
       "portfolioId": "portfolio-cuid-string", // null if not completed
       "portfolioSlug": "generated-slug", // null if not completed
       "errorMessage": null // string describing failure if status is FAILED
@@ -430,10 +435,14 @@ A premium, Notion/Linear-inspired editor interface (`app/dashboard/portfolio/[id
 makeurfolio provides structured, recruiter-ready public portfolios accessed via `app/portfolio/[slug]/page.tsx`. 
 
 ### 1. The "Minimal Editorial" Theme
-* **Design Philosophy**: Rejects generic vertically-stacked generator layouts (Hero -> Skills -> Projects -> Contact). Instead, it uses a high-end, editorial layout: `Name/Intro -> Projects (as Hero) -> About -> Experience -> Everything Else`.
-* **Typography**: Leverages `Manrope` for headings to provide a modern, structural feel, paired with `Inter` for highly readable body copy.
+* **Design Philosophy**: Rejects generic vertically-stacked generator layouts (Hero -> Skills -> Projects -> Contact). Instead, it uses a high-end, editorial layout: `Name/Intro -> About -> Featured Work -> Skills -> Experience -> Everything Else`.
+* **Typography**: Leverages `Manrope` for structural headings to provide a modern feel, paired with `Inter` for highly readable body copy (`text-lg` with `leading-relaxed` in the biography).
+* **Container System**: Strictly enforces a `max-w-[1100px]` width across the page to ensure reading comfort and premium spacing on ultra-wide monitors.
 * **Component Styling**: Clean, subtle borders, high contrast spacing, and no massive gradients. Background is forced to `#FCFCFC` (light mode) to maintain the editorial print-like aesthetic.
-* **Visibility Controls**: Users have fine-grained control over what sections to render using `showExperience`, `showEducation`, etc. If a section is toggled off or has no data, it collapses gracefully without rendering empty states.
+* **Intelligent Data Grouping**:
+  - **Skills** are automatically grouped by `category` (e.g., Frontend, Backend) into clean, scannable lists rather than rendering as a chaotic wall of pills.
+  - **Projects** are split into "Featured Case Studies" (large, dominant layout) and "Regular Projects" (2-column grid) based on the `featured` flag.
+* **Visibility Controls**: Users have fine-grained control over what sections to render using `showExperience`, `showEducation`, etc. If a section is toggled off or has no data, it collapses gracefully. Every section is wrapped in an independent `<section>` container to ensure layout rhythm remains stable regardless of missing data.
 
 ### 2. Dynamic Social Links Pipeline
 * **Old vs New**: Replaced legacy static columns (`githubUrl`, `linkedinUrl`, etc.) with a dynamic, scalable `SocialLink` table.

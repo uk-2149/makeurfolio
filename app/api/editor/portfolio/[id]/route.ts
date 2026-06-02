@@ -216,3 +216,64 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized access", statusCode: 401 } },
+        { status: 401 }
+      );
+    }
+    
+    const resolvedParams = await params;
+    
+    if (!resolvedParams.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "VALIDATION_ERROR", message: "Portfolio ID is required", statusCode: 400 } },
+        { status: 400 }
+      );
+    }
+    
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { id: resolvedParams.id },
+      select: { userId: true }
+    });
+    
+    if (!portfolio) {
+      return NextResponse.json(
+        { success: false, error: { code: "NOT_FOUND", message: "Portfolio not found", statusCode: 404 } },
+        { status: 404 }
+      );
+    }
+    
+    if (portfolio.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: { code: "FORBIDDEN", message: "You do not have permission to delete this portfolio", statusCode: 403 } },
+        { status: 403 }
+      );
+    }
+    
+    await prisma.portfolio.delete({
+      where: { id: resolvedParams.id }
+    });
+    
+    return NextResponse.json(
+      { success: true, message: "Portfolio deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting portfolio:", error);
+    return NextResponse.json(
+      { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to delete portfolio", statusCode: 500 } },
+      { status: 500 }
+    );
+  }
+}

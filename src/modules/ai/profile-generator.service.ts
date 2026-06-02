@@ -15,6 +15,7 @@ import {
 } from "./profile.schema";
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompts";
 import type { GithubSummary } from "@/src/modules/github/github.types";
+import type { OnProgressCallback } from "../generation/generation.types";
 
 const SERVICE = "ProfileGenerator";
 const GEMINI_MODEL = "gemini-2.5-flash";
@@ -32,7 +33,8 @@ interface GenerateProfileInput {
  * Retries up to MAX_RETRIES times on validation failure.
  */
 export async function generateProfile(
-  input: GenerateProfileInput
+  input: GenerateProfileInput,
+  onProgress?: OnProgressCallback
 ): Promise<NormalizedProfile> {
   if (!input.githubSummary && !input.resumeText) {
     throw new ValidationError(
@@ -55,6 +57,7 @@ export async function generateProfile(
 
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
+      await onProgress?.(`Building developer profile... (Attempt ${attempt})`, "Gemini analyzing experience", 65);
       logger.info(SERVICE, `Gemini call attempt ${attempt}/${MAX_RETRIES + 1}`);
 
       const response = await gemini.models.generateContent({
@@ -75,6 +78,7 @@ export async function generateProfile(
         });
       }
 
+      await onProgress?.("Structuring experience and formatting output...", "Generating recruiter-friendly content", 80);
       logger.info(SERVICE, "Gemini response received", {
         responseLength: rawText.length,
         tokenUsage: response.usageMetadata,
@@ -116,6 +120,7 @@ export async function generateProfile(
       }
 
       logger.timeEnd(SERVICE, "gemini-generation");
+      await onProgress?.(`Profile generated successfully! Parsed ${result.data.projects.length} projects and ${result.data.skills.length} skills.`, "Validating profile schema", 85);
       logger.info(SERVICE, "Profile generated and validated successfully", {
         projectCount: result.data.projects.length,
         skillCount: result.data.skills.length,

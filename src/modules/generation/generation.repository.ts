@@ -57,3 +57,36 @@ export async function findGenerationById(id: string) {
     },
   });
 }
+
+export async function appendGenerationLog(
+  id: string,
+  message: string,
+  currentStep?: string,
+  progress?: number
+): Promise<void> {
+  const newLog = {
+    timestamp: new Date().toISOString(),
+    message,
+  };
+
+  const data: Prisma.PortfolioGenerationUpdateInput = {};
+  
+  if (currentStep) data.currentStep = currentStep;
+  if (progress !== undefined) data.progress = progress;
+
+  // Prisma PostgreSQL handles appending to JSON arrays via jsonb_build_array or direct update
+  // A simple way to append without fetching is using raw query, or just fetch and update.
+  // Since this is MVP and we might have race conditions on array append, let's just fetch and update:
+  const current = await prisma.portfolioGeneration.findUnique({
+    where: { id },
+    select: { activityLogs: true }
+  });
+  
+  const logs = Array.isArray(current?.activityLogs) ? current.activityLogs : [];
+  data.activityLogs = [...logs, newLog] as Prisma.InputJsonValue;
+
+  await prisma.portfolioGeneration.update({
+    where: { id },
+    data,
+  });
+}

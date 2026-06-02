@@ -25,7 +25,10 @@ export async function GET(
       );
     }
 
-    const progress = PROGRESS_MAP[generation.status] ?? 0;
+    // If the database has a specific progress, use it. Otherwise fallback to the map.
+    const progress = generation.progress > 0 
+      ? generation.progress 
+      : (PROGRESS_MAP[generation.status] ?? 0);
 
     return NextResponse.json(
       {
@@ -34,6 +37,8 @@ export async function GET(
           generationId: generation.id,
           status: generation.status,
           progress,
+          currentStep: generation.currentStep,
+          activityLogs: generation.activityLogs,
           portfolioId: generation.portfolioId,
           portfolioSlug: generation.portfolio?.slug,
           errorMessage: generation.errorMessage,

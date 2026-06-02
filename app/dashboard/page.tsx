@@ -20,7 +20,9 @@ import {
   Globe,
   Settings,
   BarChart3,
-  Edit3
+  Edit3,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { authClient } from "@/src/lib/auth-client";
 import { 
@@ -67,6 +69,11 @@ export default function DashboardPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
+
+  // Deletion States
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [portfolioToDelete, setPortfolioToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Initialize theme, session, and fetch portfolios on mount
   useEffect(() => {
@@ -218,6 +225,34 @@ export default function DashboardPage() {
     fetchPortfolios();
   };
 
+  const handleDeleteClick = (id: string, name: string) => {
+    setPortfolioToDelete({ id, name });
+    setDeleteModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (!portfolioToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/editor/portfolio/${portfolioToDelete.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPortfolios(prev => prev.filter(p => p.id !== portfolioToDelete.id));
+        setDeleteModalOpen(false);
+        setPortfolioToDelete(null);
+      } else {
+        alert(data.error?.message || "Failed to delete portfolio");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error deleting portfolio");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Calculations for metric stats
   const totalPortfolios = portfolios.length;
   const totalViews = portfolios.reduce((sum, p) => sum + (p._count?.portfolioViews || 0), 0);
@@ -279,6 +314,41 @@ export default function DashboardPage() {
           generationId={generationId}
           onClose={handleCloseGenerationOverlay}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && portfolioToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-card-bg rounded-xl border border-border shadow-xl p-6">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-4">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Portfolio</h3>
+            <p className="text-sm text-secondary mb-6 leading-relaxed">
+              Are you sure you want to delete <span className="font-semibold text-foreground">{portfolioToDelete.name}</span>? This action cannot be undone and will permanently remove this portfolio from the internet.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-foreground hover:bg-input-bg transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDelete}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors flex items-center gap-2"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <><div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> Deleting...</>
+                ) : (
+                  <>Delete</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Sticky Top Navigation */}
@@ -431,9 +501,18 @@ export default function DashboardPage() {
                         {p.name}
                       </h3>
                       {/* Active Status Pill */}
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                        Published
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          Published
+                        </span>
+                        <button 
+                          onClick={() => handleDeleteClick(p.id, p.name)}
+                          className="p-1.5 text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+                          title="Delete Portfolio"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-xs font-mono text-secondary/80 bg-input-bg/50 px-2 py-1 rounded border border-border/40 select-all truncate max-w-full">

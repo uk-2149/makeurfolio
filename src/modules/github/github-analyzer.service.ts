@@ -33,6 +33,7 @@ import {
   normalizeRepo,
   aggregateLanguages,
 } from "./github.utils";
+import type { OnProgressCallback } from "../generation/generation.types";
 
 const SERVICE = "GithubAnalyzer";
 const TOP_REPO_COUNT = 5;
@@ -41,13 +42,15 @@ const TOP_REPO_COUNT = 5;
  * Analyze a GitHub profile and return normalized, scored data.
  */
 export async function analyzeGithubProfile(
-  username: string
+  username: string,
+  onProgress?: OnProgressCallback
 ): Promise<GithubSummary> {
   logger.info(SERVICE, `Starting analysis for "${username}"`);
   logger.time(`github-analysis-${username}`);
 
   try {
     // 1. Fetch user profile
+    await onProgress?.("Fetching user profile data...", "Fetching GitHub profile", 7);
     logger.info(SERVICE, "Fetching user profile...");
     const apiUser = await githubFetch<GithubApiUser>({
       path: `/users/${username}`,
@@ -55,6 +58,7 @@ export async function analyzeGithubProfile(
     const user = normalizeUser(apiUser);
 
     // 2. Fetch repositories (up to 100, sorted by most recently updated)
+    await onProgress?.("Fetching repositories...", "Fetching repositories", 10);
     logger.info(SERVICE, "Fetching repositories...");
     const apiRepos = await githubFetch<GithubApiRepo[]>({
       path: `/users/${username}/repos`,
@@ -67,6 +71,7 @@ export async function analyzeGithubProfile(
 
     // 3. Filter out forks, archived, empty
     const qualityRepos = apiRepos.filter(isQualityRepo);
+    await onProgress?.(`Found ${apiRepos.length} repos, ${qualityRepos.length} passed quality filters.`, "Filtering archived repositories", 15);
     logger.info(SERVICE, `Found ${apiRepos.length} repos, ${qualityRepos.length} passed quality filter`);
 
     if (qualityRepos.length === 0) {
@@ -91,6 +96,7 @@ export async function analyzeGithubProfile(
     const topCandidates = quickScored.slice(0, TOP_REPO_COUNT);
 
     // 5. For top candidates only: fetch README existence + detailed languages
+    await onProgress?.(`Ranking top ${topCandidates.length} repositories based on quality metrics...`, "Ranking repository quality", 20);
     logger.info(SERVICE, `Fetching details for top ${topCandidates.length} repositories...`);
 
     const scoredRepos: GithubRepoScored[] = await Promise.all(
@@ -125,6 +131,7 @@ export async function analyzeGithubProfile(
     const allLanguages = aggregateLanguages(scoredRepos);
 
     // 7. Fetch profile README (username/username repo)
+    await onProgress?.("Fetching profile README...", "Reading profile README", 23);
     logger.info(SERVICE, "Fetching profile README...");
     const profileReadme = await githubFetchRaw(username, username, "README.md");
 
@@ -136,6 +143,7 @@ export async function analyzeGithubProfile(
     };
 
     logger.timeEnd(SERVICE, `github-analysis-${username}`);
+    await onProgress?.(`Analysis complete. ${scoredRepos.length} repos scored, ${allLanguages.length} technologies found.`, "Reading profile README", 25);
     logger.info(SERVICE, `Analysis complete. ${scoredRepos.length} repos scored, ${allLanguages.length} languages found`);
 
     return summary;
