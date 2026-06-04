@@ -83,13 +83,13 @@ export async function PATCH(
     }
     
     const resolvedParams = await params;
-    
     if (!resolvedParams.id) {
       return NextResponse.json(
         { success: false, error: { code: "VALIDATION_ERROR", message: "Portfolio ID is required", statusCode: 400 } },
         { status: 400 }
       );
     }
+
     // First check ownership
     const existingPortfolio = await prisma.portfolio.findUnique({
       where: { id: resolvedParams.id },
@@ -116,12 +116,18 @@ export async function PATCH(
       certifications,
       achievements,
       socialLinks,
+      templateId,
+      id,
+      createdAt,
+      updatedAt,
+      userId,
       ...baseFields
     } = body;
     const updatedPortfolio = await prisma.portfolio.update({
       where: { id: resolvedParams.id },
       data: {
         ...baseFields,
+        templateId,
         skills: skills ? {
           deleteMany: {},
           create: skills.map((s: any) => ({ 
@@ -208,10 +214,12 @@ export async function PATCH(
       { success: true, data: updatedPortfolio },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Error updating portfolio:", error);
+  } catch (error: any) {
+    console.error("Error updating portfolio:", error?.message || error);
+    if (error?.code) console.error("Prisma Code:", error.code);
+    if (error?.meta) console.error("Prisma Meta:", error.meta);
     return NextResponse.json(
-      { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to update portfolio", statusCode: 500 } },
+      { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to update portfolio: " + (error?.message || "Unknown"), statusCode: 500 } },
       { status: 500 }
     );
   }

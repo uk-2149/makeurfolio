@@ -17,15 +17,15 @@ type SocialLink = FullPortfolio["socialLinks"][number];
  */
 export function groupSkillsByCategory(
   skills: Skill[]
-): Record<string, Skill[]> {
+): Record<string, (Skill & { _originalIndex: number })[]> {
   return skills.reduce(
-    (acc, skill) => {
+    (acc, skill, idx) => {
       const key = skill.category;
       if (!acc[key]) acc[key] = [];
-      acc[key].push(skill);
+      acc[key].push({ ...skill, _originalIndex: idx });
       return acc;
     },
-    {} as Record<string, Skill[]>
+    {} as Record<string, (Skill & { _originalIndex: number })[]>
   );
 }
 
@@ -51,12 +51,13 @@ export function formatDateRange(
  * Split projects into featured and regular arrays.
  */
 export function splitProjects(projects: Project[]): {
-  featured: Project[];
-  regular: Project[];
+  featured: (Project & { _originalIndex: number })[];
+  regular: (Project & { _originalIndex: number })[];
 } {
+  const withIndex = projects.map((p, idx) => ({ ...p, _originalIndex: idx }));
   return {
-    featured: projects.filter((p) => p.featured),
-    regular: projects.filter((p) => !p.featured),
+    featured: withIndex.filter((p) => p.featured),
+    regular: withIndex.filter((p) => !p.featured),
   };
 }
 
@@ -66,8 +67,10 @@ export function splitProjects(projects: Project[]): {
 export function getPrimarySocials(
   socialLinks: SocialLink[],
   count: number = 4
-): SocialLink[] {
-  return socialLinks.slice(0, count);
+): (SocialLink & { _originalIndex: number })[] {
+  return socialLinks
+    .map((s, idx) => ({ ...s, _originalIndex: idx }))
+    .slice(0, count);
 }
 
 /**

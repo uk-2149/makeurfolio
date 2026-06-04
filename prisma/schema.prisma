@@ -166,6 +166,7 @@ model Portfolio {
   resumeUrl String?
 
   themeId String? @default("minimal-editorial")
+  templateId String?
 
   showExperience     Boolean @default(true)
   showEducation      Boolean @default(true)

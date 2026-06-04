@@ -15,6 +15,9 @@
 import React from "react";
 import Link from "next/link";
 import { ExternalLink, MapPin, Mail, FileText, Code2 as GithubIcon } from "lucide-react";
+import { EditableField } from "@/src/components/editor/editable-field";
+import { EditableArrayItem } from "@/src/components/editor/editable-array-item";
+import { useLiveSync } from "@/src/hooks/use-live-sync";
 import type { PortfolioThemeProps } from "../shared/types";
 import {
   groupSkillsByCategory,
@@ -24,7 +27,8 @@ import {
   getTopTechString,
 } from "../shared/utils";
 
-export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps) {
+export default function MinimalEditorialTheme({ portfolio: initialPortfolio, isEditMode = false }: PortfolioThemeProps) {
+  const portfolio = useLiveSync(initialPortfolio, isEditMode);
   const { featured: featuredProjects, regular: regularProjects } = splitProjects(portfolio.projects);
   const skillsByCategory = groupSkillsByCategory(portfolio.skills);
   const topTech = getTopTechString(portfolio.skills);
@@ -44,11 +48,11 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
         <section className="space-y-10">
           <div className="space-y-6">
             <h1 className="text-5xl md:text-7xl font-heading font-extrabold tracking-tight text-[#111111] leading-tight max-w-4xl">
-              {portfolio.fullName || portfolio.name}
+              <EditableField fieldKey="fullName" value={portfolio.fullName || portfolio.name} isEditMode={isEditMode} />
             </h1>
             {portfolio.headline && (
               <p className="text-xl md:text-3xl font-heading text-[#666666] font-medium leading-snug max-w-3xl">
-                {portfolio.headline}
+                <EditableField fieldKey="headline" value={portfolio.headline} isEditMode={isEditMode} />
               </p>
             )}
           </div>
@@ -56,11 +60,11 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
           <div className="flex flex-col sm:flex-row gap-6 text-[15px] text-[#666666] font-medium pt-4">
             <div className="flex items-center gap-6">
               {portfolio.location && (
-                <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {portfolio.location}</span>
+                <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> <EditableField fieldKey="location" value={portfolio.location} isEditMode={isEditMode} /></span>
               )}
               {portfolio.email && (
                 <a href={`mailto:${portfolio.email}`} className="flex items-center gap-2 hover:text-[#111111] transition-colors">
-                  <Mail className="w-4 h-4" /> {portfolio.email}
+                  <Mail className="w-4 h-4" /> <EditableField fieldKey="email" value={portfolio.email} isEditMode={isEditMode} />
                 </a>
               )}
             </div>
@@ -127,9 +131,7 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
             
             <div className="md:col-span-8 md:pl-12">
               <div className="prose prose-lg prose-gray prose-p:leading-relaxed max-w-none text-[#444444]">
-                {(portfolio.bio || portfolio.summary || "").split("\n").map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
-                ))}
+                <EditableField fieldKey="summary" value={portfolio.summary || portfolio.bio || ""} isEditMode={isEditMode} />
               </div>
             </div>
             </div>
@@ -145,17 +147,21 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
             {featuredProjects.length > 0 && (
               <div className="space-y-12">
                 {featuredProjects.map((project) => (
-                  <div key={project.id} className="group relative bg-white border border-gray-100 rounded-3xl p-8 md:p-12 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-500 overflow-hidden">
+                  <EditableArrayItem
+                    key={project.id}
+                    arrayPath="projects"
+                    index={project._originalIndex}
+                    isEditMode={isEditMode}
+                    className="group relative bg-white border border-gray-100 rounded-3xl p-8 md:p-12 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-500 overflow-hidden"
+                  >
                     <div className="space-y-6 flex flex-col justify-center max-w-4xl">
                       <div className="space-y-2">
                         <h3 className="text-3xl font-heading font-extrabold text-[#111111] tracking-tight">
-                          {project.title}
+                          <EditableField fieldKey={`projects.${project._originalIndex}.title`} value={project.title} isEditMode={isEditMode} />
                         </h3>
-                        {(project.aiSummary || project.description) && (
-                          <p className="text-lg font-medium text-[#666666] leading-snug">
-                            {project.aiSummary || project.description}
-                          </p>
-                        )}
+                        <div className="text-lg font-medium text-[#666666] leading-snug">
+                          <EditableField fieldKey={`projects.${project._originalIndex}.description`} value={project.description || project.aiSummary || ""} isEditMode={isEditMode} />
+                        </div>
                       </div>
                       
                       {Array.isArray(project.techStack) && project.techStack.length > 0 && (
@@ -168,20 +174,20 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
                         </div>
                       )}
 
-                      <div className="flex gap-4 pt-4">
+                      <div className="flex items-center gap-4 pt-4">
                         {project.liveUrl && (
-                          <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-[#111111] text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-colors">
-                            View Project <ExternalLink className="w-4 h-4" />
+                          <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111111] text-white text-sm font-bold rounded-xl hover:bg-[#333333] hover:-translate-y-0.5 transition-all">
+                            View Live <ExternalLink className="w-4 h-4" />
                           </a>
                         )}
                         {project.githubUrl && (
-                          <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-[#111111] rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">
-                            <GithubIcon className="w-4 h-4" /> GitHub
+                          <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-50 text-[#111111] text-sm font-bold rounded-xl hover:bg-gray-100 hover:-translate-y-0.5 transition-all">
+                            Source <GithubIcon className="w-4 h-4" />
                           </a>
                         )}
                       </div>
                     </div>
-                  </div>
+                  </EditableArrayItem>
                 ))}
               </div>
             )}
@@ -190,10 +196,16 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
             {regularProjects.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                 {regularProjects.map((project) => (
-                  <div key={project.id} className="group bg-white border border-gray-100 rounded-2xl p-8 hover:shadow-md hover:border-gray-200 transition-all duration-300 flex flex-col h-full">
+                  <EditableArrayItem
+                    key={project.id}
+                    arrayPath="projects"
+                    index={project._originalIndex}
+                    isEditMode={isEditMode}
+                    className="group bg-white border border-gray-100 rounded-2xl p-8 hover:shadow-md hover:border-gray-200 transition-all duration-300 flex flex-col h-full"
+                  >
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <h3 className="text-xl font-heading font-bold text-[#111111]">
-                        {project.title}
+                        <EditableField fieldKey={`projects.${project._originalIndex}.title`} value={project.title} isEditMode={isEditMode} />
                       </h3>
                       <div className="flex gap-2 shrink-0">
                         {project.githubUrl && (
@@ -209,11 +221,9 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
                       </div>
                     </div>
                     
-                    {project.description && (
-                      <p className="text-[#666666] leading-relaxed text-[14px] mb-6 flex-grow">
-                        {project.description}
-                      </p>
-                    )}
+                    <div className="text-[#666666] leading-relaxed text-[14px] mb-6 flex-grow">
+                      <EditableField fieldKey={`projects.${project._originalIndex}.description`} value={project.description || ""} isEditMode={isEditMode} />
+                    </div>
                     
                     {Array.isArray(project.techStack) && project.techStack.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-auto">
@@ -224,7 +234,7 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
                         ))}
                       </div>
                     )}
-                  </div>
+                  </EditableArrayItem>
                 ))}
               </div>
             )}
@@ -241,9 +251,15 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
                   <h3 className="text-sm font-semibold text-[#666666] uppercase tracking-wider">{category}</h3>
                   <div className="flex flex-col gap-2">
                     {skills.map((skill) => (
-                      <div key={skill.id} className="text-[15px] font-medium text-[#111111]">
-                        {skill.name}
-                      </div>
+                      <EditableArrayItem 
+                        key={skill.id} 
+                        arrayPath="skills"
+                        index={skill._originalIndex}
+                        isEditMode={isEditMode}
+                        className="text-[15px] font-medium text-[#111111]"
+                      >
+                        <EditableField fieldKey={`skills.${skill._originalIndex}.name`} value={skill.name} isEditMode={isEditMode} />
+                      </EditableArrayItem>
                     ))}
                   </div>
                 </div>
@@ -257,8 +273,14 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
           <section className="space-y-10">
             <h2 className="text-2xl font-heading font-bold text-[#111111] tracking-tight">Experience</h2>
             <div className="border-l border-gray-200 pl-6 md:pl-8 space-y-16">
-              {portfolio.experiences.map((exp) => (
-                <div key={exp.id} className="relative group">
+              {portfolio.experiences.map((exp, idx) => (
+                <EditableArrayItem 
+                  key={exp.id} 
+                  arrayPath="experiences"
+                  index={idx}
+                  isEditMode={isEditMode}
+                  className="relative group"
+                >
                   {/* Timeline dot */}
                   <div className="absolute -left-[31px] md:-left-[39px] top-1.5 w-3 h-3 bg-white border-2 border-gray-300 rounded-full group-hover:border-[#111111] transition-colors" />
                   
@@ -267,16 +289,18 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
                       {formatDateRange(exp.startDate, exp.endDate, exp.currentlyWorking)}
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-heading font-extrabold text-[#111111]">{exp.role}</h3>
-                      <p className="text-[#666666] font-medium text-[15px]">{exp.company}</p>
+                      <h3 className="text-xl font-heading font-extrabold text-[#111111]">
+                        <EditableField fieldKey={`experiences.${idx}.role`} value={exp.role} isEditMode={isEditMode} />
+                      </h3>
+                      <div className="text-[#666666] font-medium text-[15px]">
+                        <EditableField fieldKey={`experiences.${idx}.company`} value={exp.company} isEditMode={isEditMode} />
+                      </div>
                     </div>
                   </div>
-                  {exp.description && (
-                    <div className="md:pl-[calc(25%+2rem)] text-[15px] text-[#666666] leading-relaxed whitespace-pre-wrap">
-                      {exp.description}
-                    </div>
-                  )}
-                </div>
+                  <div className="md:pl-[calc(25%+2rem)] text-[15px] text-[#666666] leading-relaxed whitespace-pre-wrap">
+                    <EditableField fieldKey={`experiences.${idx}.description`} value={exp.description || ""} isEditMode={isEditMode} />
+                  </div>
+                </EditableArrayItem>
               ))}
             </div>
           </section>
@@ -290,16 +314,26 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
             <section className="space-y-8">
               <h2 className="text-xl font-heading font-bold text-[#111111] tracking-tight">Education</h2>
               <div className="space-y-8">
-                {portfolio.educations.map((edu) => (
-                  <div key={edu.id} className="space-y-2">
-                    <h3 className="font-heading font-bold text-lg text-[#111111]">{edu.institution}</h3>
-                    <p className="text-[15px] text-[#666666]">{edu.degree} in {edu.fieldOfStudy}</p>
+                {portfolio.educations.map((edu, idx) => (
+                  <EditableArrayItem 
+                    key={edu.id} 
+                    arrayPath="educations"
+                    index={idx}
+                    isEditMode={isEditMode}
+                    className="space-y-2"
+                  >
+                    <h3 className="font-heading font-bold text-lg text-[#111111]">
+                      <EditableField fieldKey={`educations.${idx}.institution`} value={edu.institution} isEditMode={isEditMode} />
+                    </h3>
+                    <div className="text-[15px] text-[#666666]">
+                      <EditableField fieldKey={`educations.${idx}.degree`} value={edu.degree || ""} isEditMode={isEditMode} /> in <EditableField fieldKey={`educations.${idx}.fieldOfStudy`} value={edu.fieldOfStudy || ""} isEditMode={isEditMode} />
+                    </div>
                     {(edu.startDate || edu.endDate) && (
                       <p className="text-sm text-gray-400 font-medium">
                         {formatDateRange(edu.startDate, edu.endDate)}
                       </p>
                     )}
-                  </div>
+                  </EditableArrayItem>
                 ))}
               </div>
             </section>
@@ -310,18 +344,26 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
             <section className="space-y-8">
               <h2 className="text-xl font-heading font-bold text-[#111111] tracking-tight">Certifications</h2>
               <div className="space-y-6">
-                {portfolio.certifications.map((cert) => (
-                  <div key={cert.id} className="group">
+                {portfolio.certifications.map((cert, idx) => (
+                  <EditableArrayItem 
+                    key={cert.id} 
+                    arrayPath="certifications"
+                    index={idx}
+                    isEditMode={isEditMode}
+                    className="group"
+                  >
                     <h3 className="font-heading font-bold text-lg text-[#111111] flex items-center gap-2">
-                      {cert.title}
+                      <EditableField fieldKey={`certifications.${idx}.title`} value={cert.title} isEditMode={isEditMode} />
                       {cert.credentialUrl && (
                         <a href={cert.credentialUrl} target="_blank" rel="noopener noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity">
                           <ExternalLink className="w-4 h-4 text-gray-400 hover:text-[#111111]" />
                         </a>
                       )}
                     </h3>
-                    <p className="text-[15px] text-[#666666] mt-1">{cert.issuer}</p>
-                  </div>
+                    <p className="text-[15px] text-[#666666] mt-1">
+                      <EditableField fieldKey={`certifications.${idx}.issuer`} value={cert.issuer} isEditMode={isEditMode} />
+                    </p>
+                  </EditableArrayItem>
                 ))}
               </div>
             </section>
@@ -332,11 +374,21 @@ export default function MinimalEditorialTheme({ portfolio }: PortfolioThemeProps
             <section className="space-y-8">
               <h2 className="text-xl font-heading font-bold text-[#111111] tracking-tight">Awards & Recognition</h2>
               <div className="space-y-6">
-                {portfolio.achievements.map((ach) => (
-                  <div key={ach.id} className="space-y-2">
-                    <h3 className="font-heading font-bold text-lg text-[#111111]">{ach.title}</h3>
-                    {ach.description && <p className="text-[15px] text-[#666666]">{ach.description}</p>}
-                  </div>
+                {portfolio.achievements.map((ach, idx) => (
+                  <EditableArrayItem 
+                    key={ach.id} 
+                    arrayPath="achievements"
+                    index={idx}
+                    isEditMode={isEditMode}
+                    className="space-y-2"
+                  >
+                    <h3 className="font-heading font-bold text-lg text-[#111111]">
+                      <EditableField fieldKey={`achievements.${idx}.title`} value={ach.title} isEditMode={isEditMode} />
+                    </h3>
+                    <p className="text-[15px] text-[#666666]">
+                      <EditableField fieldKey={`achievements.${idx}.description`} value={ach.description || ""} isEditMode={isEditMode} />
+                    </p>
+                  </EditableArrayItem>
                 ))}
               </div>
             </section>

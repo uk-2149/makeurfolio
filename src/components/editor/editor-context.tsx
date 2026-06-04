@@ -10,6 +10,7 @@ interface EditorContextType {
   hasUnsavedChanges: boolean;
   error: string | null;
   updateField: (field: string, value: any) => void;
+  removeArrayItem: (arrayPath: string, index: number) => void;
   saveChanges: () => Promise<void>;
   discardChanges: () => void;
 }
@@ -74,9 +75,66 @@ export function EditorProvider({
   const updateField = useCallback((field: string, value: any) => {
     setFormData((prev: any) => {
       if (!prev) return prev;
+      
+      // Handle deep fields like "experiences.0.role"
+      if (field.includes(".")) {
+        const parts = field.split(".");
+        const newObj = { ...prev };
+        let current = newObj;
+        
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i];
+          if (Array.isArray(current[part])) {
+            current[part] = [...current[part]];
+          } else if (typeof current[part] === "object" && current[part] !== null) {
+            current[part] = { ...current[part] };
+          }
+          current = current[part];
+        }
+        
+        current[parts[parts.length - 1]] = value;
+        return newObj;
+      }
+      
       return { ...prev, [field]: value };
     });
   }, []);
+
+  const removeArrayItem = useCallback((arrayPath: string, index: number) => {
+    setFormData((prev: any) => {
+      if (!prev) return prev;
+      
+      const parts = arrayPath.split(".");
+      const newObj = { ...prev };
+      let current = newObj;
+      
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (i === parts.length - 1) {
+          if (Array.isArray(current[part])) {
+            current[part] = current[part].filter((_: any, idx: number) => idx !== index);
+          }
+        } else {
+          current[part] = Array.isArray(current[part]) ? [...current[part]] : { ...current[part] };
+          current = current[part];
+        }
+      }
+      return newObj;
+    });
+  }, []);
+
+  // Handle messages from the iframe (Inline editing)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "FIELD_EDITED") {
+        updateField(event.data.field, event.data.value);
+      } else if (event.data?.type === "ARRAY_ITEM_DELETED") {
+        removeArrayItem(event.data.arrayPath, event.data.index);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [updateField, removeArrayItem]);
 
   const saveChanges = async () => {
     if (!hasUnsavedChanges || !formData) return;
@@ -121,6 +179,7 @@ export function EditorProvider({
         hasUnsavedChanges, 
         error, 
         updateField, 
+        removeArrayItem,
         saveChanges, 
         discardChanges 
       }}

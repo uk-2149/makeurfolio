@@ -1,54 +1,131 @@
 "use client";
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useEditor } from "./editor-context";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, Palette } from "lucide-react";
 import { themes } from "@/src/themes/theme-manifest";
+
+/** A small colored accent dot for quick visual identification per theme. */
+const THEME_ACCENTS: Record<string, string> = {
+  "minimal-editorial": "#111111",
+  "founder-os":        "#6366f1",
+  "vercel":            "#007cf0",
+  "linear":            "#5e6ad2",
+  "stripe":            "#533afd",
+  "raycast":           "#ff5757",
+  "notion":            "#5645d4",
+};
 
 export function ThemeSelector() {
   const { portfolio, updateField } = useEditor();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   if (!portfolio) return null;
   const currentThemeId = portfolio.themeId || "minimal-editorial";
+  const currentTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-4">
-      {themes.map((theme) => {
-        const isSelected = currentThemeId === theme.id;
-        
-        return (
-          <button
-            key={theme.id}
-            onClick={() => updateField("themeId", theme.id)}
-            className={`w-full group flex flex-col items-start gap-3 p-3 rounded-xl border transition-all text-left ${
-              isSelected 
-                ? "bg-input-bg border-foreground shadow-sm ring-1 ring-foreground" 
-                : "bg-card-bg border-border/40 hover:border-border hover:bg-input-bg/50"
-            }`}
-          >
-            {/* Thumbnail Mockup */}
-            <div className={`w-full aspect-video rounded-lg bg-input-bg border border-border/60 relative overflow-hidden flex flex-col p-3 gap-2 opacity-80 group-hover:opacity-100 transition-opacity`}>
-              {/* Fake UI lines */}
-              <div className="w-1/2 h-2 bg-foreground/20 rounded-full" />
-              <div className="w-3/4 h-6 bg-foreground/10 rounded-sm mt-2" />
-              <div className="flex gap-2 mt-auto">
-                <div className="w-8 h-8 bg-foreground/10 rounded-sm" />
-                <div className="w-8 h-8 bg-foreground/10 rounded-sm" />
-              </div>
-            </div>
-            
-            <div className="w-full flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className={`text-sm font-semibold tracking-tight ${isSelected ? "text-foreground" : "text-secondary"}`}>
-                  {theme.name}
-                </span>
-                <span className="text-[10px] text-secondary/60 line-clamp-1">{theme.description}</span>
-              </div>
-              {isSelected && <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />}
-            </div>
-          </button>
-        );
-      })}
-      {themes.length <= 1 && (
-        <div className="pt-4 text-center col-span-full">
-          <span className="text-xs text-secondary/40 font-medium">More themes coming soon...</span>
+    <div ref={containerRef} className="relative w-full">
+
+      {/* ── Trigger button ── */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left bg-card-bg border-border hover:border-foreground/30 hover:bg-input-bg"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {/* Accent dot */}
+        <span
+          className="w-3 h-3 rounded-full shrink-0 ring-1 ring-white/10"
+          style={{ background: THEME_ACCENTS[currentThemeId] ?? "#888" }}
+        />
+
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold text-foreground truncate">
+            {currentTheme.name}
+          </span>
+          <span className="block text-[10px] text-secondary/50 truncate leading-tight mt-0.5">
+            {currentTheme.description}
+          </span>
+        </span>
+
+        <ChevronDown
+          className={`w-4 h-4 text-secondary shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {/* ── Floating dropdown ── */}
+      {open && (
+        <div
+          role="listbox"
+          className="absolute z-50 top-full left-0 right-0 mt-2 rounded-xl border border-border bg-card-bg shadow-2xl overflow-hidden"
+          style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2)" }}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/60">
+            <Palette className="w-3.5 h-3.5 text-secondary" />
+            <span className="text-[11px] font-semibold text-secondary uppercase tracking-widest">
+              Choose Theme
+            </span>
+            <span className="ml-auto text-[10px] text-secondary/40 font-medium">
+              {themes.length} available
+            </span>
+          </div>
+
+          {/* Theme rows */}
+          <div className="py-1 max-h-72 overflow-y-auto">
+            {themes.map((theme) => {
+              const isSelected = currentThemeId === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    updateField("themeId", theme.id);
+                    setOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left group ${
+                    isSelected
+                      ? "bg-input-bg"
+                      : "hover:bg-input-bg/60"
+                  }`}
+                >
+                  {/* Accent dot */}
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10"
+                    style={{ background: THEME_ACCENTS[theme.id] ?? "#888" }}
+                  />
+
+                  {/* Labels */}
+                  <span className="flex-1 min-w-0">
+                    <span className={`block text-sm font-medium truncate ${isSelected ? "text-foreground" : "text-secondary"}`}>
+                      {theme.name}
+                    </span>
+                    <span className="block text-[10px] text-secondary/40 truncate leading-tight mt-0.5">
+                      {theme.description}
+                    </span>
+                  </span>
+
+                  {/* Checkmark */}
+                  {isSelected && (
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
