@@ -14,7 +14,7 @@ import type { Prisma } from "@/app/generated/prisma/client";
  * The complete portfolio payload with all relations included.
  * Inferred directly from Prisma so it stays in sync with the schema automatically.
  */
-export type FullPortfolio = Prisma.PortfolioGetPayload<{
+export type FullPortfolio = Omit<Prisma.PortfolioGetPayload<{
   include: {
     experiences: true;
     educations: true;
@@ -24,7 +24,10 @@ export type FullPortfolio = Prisma.PortfolioGetPayload<{
     certifications: true;
     achievements: true;
   };
-}>;
+}>, "projects" | "skills"> & {
+  projects: (Prisma.ProjectGetPayload<{}> & { _originalIndex?: number })[];
+  skills: (Prisma.SkillGetPayload<{}> & { _originalIndex?: number })[];
+};
 
 /**
  * The props contract every theme component must accept.
@@ -32,6 +35,24 @@ export type FullPortfolio = Prisma.PortfolioGetPayload<{
  * All themes receive an identical, fully-hydrated portfolio object.
  * No theme should ever need to fetch additional data.
  */
+export interface ThemeConfig {
+  id: string;
+  colors: {
+    canvas: string;
+    surface: string;
+    surfaceElevated: string;
+    border: string;
+    ink: string;
+    mute: string;
+    primary: string;
+  };
+  typography: {
+    fontFamily: string;
+  };
+}
+
 export interface PortfolioThemeProps {
   portfolio: FullPortfolio;
+  theme: ThemeConfig;
+  isEditMode?: boolean;
 }

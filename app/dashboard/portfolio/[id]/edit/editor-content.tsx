@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, RotateCcw, Loader2, ExternalLink, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, RotateCcw, Loader2, ExternalLink, Trash2, AlertTriangle, MonitorPlay, FileText } from "lucide-react";
 import { useEditor } from "@/src/components/editor/editor-context";
 import { EditorSidebar } from "@/src/components/editor/sidebar";
 import { ProfileSection } from "@/src/components/editor/profile-section";
@@ -16,6 +16,8 @@ import { ProjectsSection } from "@/src/components/editor/projects-section";
 import { CertificationsSection } from "@/src/components/editor/certifications-section";
 import { AchievementsSection } from "@/src/components/editor/achievements-section";
 import { ThemeSelector } from "@/src/components/editor/theme-selector";
+import { TemplateSelector } from "@/src/components/editor/template-selector";
+import { LivePreviewIframe } from "@/src/components/editor/live-preview-iframe";
 
 export function EditorContent() {
   const { 
@@ -29,6 +31,8 @@ export function EditorContent() {
   
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("profile");
+  const [rightTab, setRightTab] = useState<"theme" | "template">("theme");
+  const [viewMode, setViewMode] = useState<"form" | "visual">("form");
   
   // Deletion States
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -58,12 +62,22 @@ export function EditorContent() {
 
   // Intersection Observer for scroll spy logic can be added here
   useEffect(() => {
+    if (viewMode === "visual") return;
+    
     const handleScroll = () => {
-      const sections = ["profile", "social", "experience", "education", "skills", "projects", "certifications", "achievements", "seo"];
+      const sections = [
+        "profile", "social", "experience", "education", 
+        "skills", "projects", "certifications", "achievements", "seo"
+      ];
+      
+      const container = document.getElementById("editor-scroll-container");
+      if (!container) return;
+
       for (const section of sections) {
-        const el = document.getElementById(`section-${section}`);
-        if (el) {
-          const rect = el.getBoundingClientRect();
+        const element = document.getElementById(`section-${section}`);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          // Adjust offset as needed based on container position
           if (rect.top >= 0 && rect.top <= 300) {
             setActiveSection(section);
             break;
@@ -71,9 +85,12 @@ export function EditorContent() {
         }
       }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    const container = document.getElementById("editor-scroll-container");
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }
+  }, [viewMode]);
 
   if (isLoading) {
     return (
@@ -93,10 +110,10 @@ export function EditorContent() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border/40 py-4 mb-8">
-        <div className="flex items-center justify-between">
+      <header className="shrink-0 z-40 bg-background border-b border-border/40 p-4">
+        <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
           <div className="flex items-center gap-4">
             <Link 
               href="/dashboard"
@@ -118,24 +135,38 @@ export function EditorContent() {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            
+            <button
+              onClick={() => setViewMode(viewMode === "form" ? "visual" : "form")}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-secondary hover:text-foreground hover:bg-border/40 rounded-md transition-colors"
+            >
+              {viewMode === "form" ? (
+                <><MonitorPlay className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Visual Editor</span></>
+              ) : (
+                <><FileText className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Form Editor</span></>
+              )}
+            </button>
+            
             <Link 
               href={`/portfolio/${portfolio.slug}`}
               target="_blank"
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-secondary hover:text-foreground hover:bg-border/40 rounded-md transition-colors"
+              title="Open Live Site"
             >
-              Preview <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5" />
             </Link>
-            
+
+            <div className="w-px h-5 bg-border mx-1" />
+
             <button
               onClick={() => setDeleteModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+              className="p-2 text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
               title="Delete Portfolio"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Delete</span>
+              <Trash2 className="w-4 h-4" />
             </button>
-            
+
             <button
               onClick={discardChanges}
               disabled={!hasUnsavedChanges || isSaving}
@@ -163,11 +194,99 @@ export function EditorContent() {
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
-              {isSaving ? "Saving..." : "Save Changes"}
+              {isSaving ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
       </header>
+
+      {/* Main Area: Conditional Rendering based on viewMode */}
+      {viewMode === "form" ? (
+        <div id="editor-scroll-container" className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="max-w-7xl mx-auto p-4 sm:p-8 flex flex-col lg:flex-row gap-12">
+            
+            {/* Sidebar Navigation */}
+            <div className="w-full lg:w-48 shrink-0 order-2 lg:order-1">
+              <div className="sticky top-8">
+                <EditorSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+              </div>
+            </div>
+
+            {/* Main Form Content */}
+            <main className="flex-1 space-y-12 order-3 lg:order-2 max-w-3xl">
+              <div id="section-profile" className="scroll-mt-8">
+                  <ProfileSection />
+              </div>
+              
+              <div id="section-social" className="scroll-mt-8">
+                  <SocialSection />
+              </div>
+              
+              <div id="section-experience" className="scroll-mt-8">
+                  <ExperienceSection />
+              </div>
+
+              <div id="section-education" className="scroll-mt-8">
+                  <EducationSection />
+              </div>
+              
+              <div id="section-skills" className="scroll-mt-8">
+                  <SkillsSection />
+              </div>
+
+              <div id="section-projects" className="scroll-mt-8">
+                  <ProjectsSection />
+              </div>
+              
+              <div id="section-certifications" className="scroll-mt-8">
+                  <CertificationsSection />
+              </div>
+
+              <div id="section-achievements" className="scroll-mt-8">
+                  <AchievementsSection />
+              </div>
+              
+              <div id="section-seo" className="scroll-mt-8">
+                  <SEOSection />
+              </div>
+            </main>
+
+            {/* Appearance Panel */}
+            <div className="w-full lg:w-64 shrink-0 order-1 lg:order-3 mb-8 lg:mb-0">
+              <div className="sticky top-8">
+                <div className="flex gap-1 p-1 rounded-xl mb-6 w-fit" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <button
+                        onClick={() => setRightTab("theme")}
+                        className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                        rightTab === "theme"
+                            ? "bg-foreground text-background shadow-sm"
+                            : "text-secondary hover:text-foreground"
+                        }`}
+                    >
+                        Theme
+                    </button>
+                    <button
+                        onClick={() => setRightTab("template")}
+                        className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                        rightTab === "template"
+                            ? "bg-foreground text-background shadow-sm"
+                            : "text-secondary hover:text-foreground"
+                        }`}
+                    >
+                        Template
+                    </button>
+                </div>
+
+                {rightTab === "theme" ? <ThemeSelector /> : <TemplateSelector />}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 w-full bg-card-bg relative z-10">
+          <LivePreviewIframe slug={portfolio.slug} />
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && portfolio && (
@@ -203,63 +322,6 @@ export function EditorContent() {
           </div>
         </div>
       )}
-
-      <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
-        {/* Sidebar (Left) */}
-        <div className="w-full lg:w-48 shrink-0 order-2 lg:order-1">
-          <div className="sticky top-32">
-            <EditorSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-          </div>
-        </div>
-        
-       {/* Main Content (Center) */}
-        <main className="flex-1 space-y-12 max-w-3xl pb-32 order-3 lg:order-2">
-          <div id="section-profile" className="scroll-mt-28">
-            <ProfileSection />
-          </div>
-          
-          <div id="section-social" className="scroll-mt-28">
-            <SocialSection />
-          </div>
-          
-          <div id="section-experience" className="scroll-mt-28">
-            <ExperienceSection />
-          </div>
-
-          <div id="section-education" className="scroll-mt-28">
-            <EducationSection />
-          </div>
-          
-          <div id="section-skills" className="scroll-mt-28">
-            <SkillsSection />
-          </div>
-
-          <div id="section-projects" className="scroll-mt-28">
-            <ProjectsSection />
-          </div>
-          
-          <div id="section-certifications" className="scroll-mt-28">
-            <CertificationsSection />
-          </div>
-
-          <div id="section-achievements" className="scroll-mt-28">
-            <AchievementsSection />
-          </div>
-          
-          <div id="section-seo" className="scroll-mt-28">
-            <SEOSection />
-          </div>
-        </main>
-
-        {/* Themes Panel (Right) */}
-        <div className="w-full lg:w-64 shrink-0 order-1 lg:order-3 mb-8 lg:mb-0">
-          <div className="sticky top-32">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-secondary mb-4">Themes</h2>
-            {/* The ThemeSelector component will go here */}
-            <ThemeSelector />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

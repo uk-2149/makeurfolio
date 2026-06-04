@@ -42,3 +42,7 @@ next-env.d.ts
 
 /app/generated/prisma
 /description.txt
+
+
+# local (rudra)
+/.agent/design-md
