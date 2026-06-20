@@ -142,47 +142,6 @@ export function ThemeSelector() {
           <div className="py-1 max-h-72 overflow-y-auto relative">
             {renderThemeGroup(standardThemes, "Standard Themes")}
             {renderThemeGroup(exclusiveThemes, "Exclusive Themes")}
-          <div className="py-1 max-h-72 overflow-y-auto">
-            {themes.map((theme) => {
-              const isSelected = currentThemeId === theme.id;
-              return (
-                <button
-                  key={theme.id}
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => {
-                    updateField("themeId", theme.id);
-                    setOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left group ${
-                    isSelected
-                      ? "bg-input-bg"
-                      : "hover:bg-input-bg/60"
-                  }`}
-                >
-                  {/* Accent dot */}
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10"
-                    style={{ background: THEME_ACCENTS[theme.id] ?? "#888" }}
-                  />
-
-                  {/* Labels */}
-                  <span className="flex-1 min-w-0">
-                    <span className={`block text-sm font-medium truncate ${isSelected ? "text-foreground" : "text-secondary"}`}>
-                      {theme.name}
-                    </span>
-                    <span className="block text-[10px] text-secondary/40 truncate leading-tight mt-0.5">
-                      {theme.description}
-                    </span>
-                  </span>
-
-                  {/* Checkmark */}
-                  {isSelected && (
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
-                  )}
-                </button>
-              );
-            })}
           </div>
         </div>
       )}

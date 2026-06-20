@@ -4,7 +4,7 @@ const ROOT_DOMAIN =
   process.env.NEXT_PUBLIC_ROOT_DOMAIN
     ?.split(":")[0] || "makeurfolio.com";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const host =
     (req.headers.get("host") || "")
       .split(":")[0]

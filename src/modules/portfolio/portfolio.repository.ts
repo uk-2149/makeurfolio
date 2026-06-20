@@ -12,7 +12,7 @@ export async function createPortfolioWithRelations(
   data: Prisma.PortfolioCreateInput
 ): Promise<PortfolioWithRelations> {
   // Prisma handles nested writes atomically in a single transaction
-  return prisma.portfolio.create({
+  const result = await prisma.portfolio.create({
     data,
     include: {
       experiences: { orderBy: { sortOrder: 'asc' } },
@@ -27,6 +27,7 @@ export async function createPortfolioWithRelations(
       socialLinks: { orderBy: { sortOrder: 'asc' } },
     },
   });
+  return result as unknown as PortfolioWithRelations;
 }
 
 export async function findPortfolioBySlug(

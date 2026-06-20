@@ -1,0 +1,389 @@
+
+> makeurfolio@0.1.0 build /home/rudra/Desktop/makeurfolio
+> next build
+
+▲ Next.js 16.2.7 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 12 errors:
+./proxy.ts
+Proxy is missing expected function export name
+This function is what Next.js runs for every request handled by this proxy (previously called middleware).
+
+Why this happens:
+- You are migrating from `middleware` to `proxy`, but haven't updated the exported function.
+- The file exists but doesn't export a function.
+- The export is not a function (e.g., an object or constant).
+- There's a syntax error preventing the export from being recognized.
+
+To fix it:
+- Ensure this file has either a default or "proxy" function export.
+
+Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+
+./src/components/editor/theme-selector.tsx:188:8
+Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  [90m186 |[0m           </div>
+  [90m187 |[0m         </div>
+[31m[1m>[0m [90m188 |[0m       )}
+  [90m    |[0m        [31m[1m^[0m
+  [90m189 |[0m     </div>
+  [90m190 |[0m   );
+  [90m191 |[0m }
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/theme-selector.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/theme-selector.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+
+./src/components/editor/sortable-list.tsx:4:1
+Module not found: Can't resolve '@dnd-kit/core'
+  [90m 2 |[0m
+  [90m 3 |[0m [36mimport[0m [33mReact[0m [36mfrom[0m [32m"react"[0m;
+[31m[1m>[0m [90m 4 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m 5 |[0m   [33mDndContext[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m 6 |[0m   closestCenter,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m 7 |[0m   [33mKeyboardSensor[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m 8 |[0m   [33mPointerSensor[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m 9 |[0m   useSensor,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m10 |[0m   useSensors,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m11 |[0m   [33mDragEndEvent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m } [36mfrom[0m [32m"@dnd-kit/core"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m13 |[0m [36mimport[0m {
+  [90m14 |[0m   arrayMove,
+  [90m15 |[0m   [33mSortableContext[0m,
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/sortable-list.tsx [Client Component Browser]
+    ./src/components/editor/achievements-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/sortable-list.tsx [Client Component SSR]
+    ./src/components/editor/achievements-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/sortable-item.tsx:4:1
+Module not found: Can't resolve '@dnd-kit/sortable'
+  [90m2 |[0m
+  [90m3 |[0m [36mimport[0m [33mReact[0m [36mfrom[0m [32m"react"[0m;
+[31m[1m>[0m [90m4 |[0m [36mimport[0m { useSortable } [36mfrom[0m [32m"@dnd-kit/sortable"[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m5 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m6 |[0m
+  [90m7 |[0m [36minterface[0m [33mSortableItemProps[0m {
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/sortable-item.tsx [Client Component Browser]
+    ./src/components/editor/achievements-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/sortable-item.tsx [Client Component SSR]
+    ./src/components/editor/achievements-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/sortable-list.tsx:13:1
+Module not found: Can't resolve '@dnd-kit/sortable'
+  [90m11 |[0m   [33mDragEndEvent[0m,
+  [90m12 |[0m } [36mfrom[0m [32m"@dnd-kit/core"[0m;
+[31m[1m>[0m [90m13 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   arrayMove,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   [33mSortableContext[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   sortableKeyboardCoordinates,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   verticalListSortingStrategy,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   horizontalListSortingStrategy,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m"@dnd-kit/sortable"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m
+  [90m21 |[0m [36minterface[0m [33mSortableListProps[0m {
+  [90m22 |[0m   items: any[];
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/sortable-list.tsx [Client Component Browser]
+    ./src/components/editor/achievements-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/sortable-list.tsx [Client Component SSR]
+    ./src/components/editor/achievements-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/achievements-section.tsx:9:1
+Module not found: Can't resolve '@dnd-kit/utilities'
+  [90m 7 |[0m [36mimport[0m { [33mSortableList[0m } [36mfrom[0m [32m"./sortable-list"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mSortableItem[0m } [36mfrom[0m [32m"./sortable-item"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mexport[0m [36mfunction[0m [33mAchievementsSection[0m() {
+  [90m12 |[0m   [36mconst[0m { portfolio, updateField } = useEditor();
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/achievements-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/achievements-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/certifications-section.tsx:9:1
+Module not found: Can't resolve '@dnd-kit/utilities'
+  [90m 7 |[0m [36mimport[0m { [33mSortableList[0m } [36mfrom[0m [32m"./sortable-list"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mSortableItem[0m } [36mfrom[0m [32m"./sortable-item"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mexport[0m [36mfunction[0m [33mCertificationsSection[0m() {
+  [90m12 |[0m   [36mconst[0m { portfolio, updateField } = useEditor();
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/certifications-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/certifications-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/education-section.tsx:9:1
+Module not found: Can't resolve '@dnd-kit/utilities'
+  [90m 7 |[0m [36mimport[0m { [33mSortableList[0m } [36mfrom[0m [32m"./sortable-list"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mSortableItem[0m } [36mfrom[0m [32m"./sortable-item"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mexport[0m [36mfunction[0m [33mEducationSection[0m() {
+  [90m12 |[0m   [36mconst[0m { portfolio, updateField } = useEditor();
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/education-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/education-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/experience-section.tsx:9:1
+Module not found: Can't resolve '@dnd-kit/utilities'
+  [90m 7 |[0m [36mimport[0m { [33mSortableList[0m } [36mfrom[0m [32m"./sortable-list"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mSortableItem[0m } [36mfrom[0m [32m"./sortable-item"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mexport[0m [36mfunction[0m [33mExperienceSection[0m() {
+  [90m12 |[0m   [36mconst[0m { portfolio, updateField } = useEditor();
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/experience-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/experience-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/projects-section.tsx:8:1
+Module not found: Can't resolve '@dnd-kit/utilities'
+  [90m 6 |[0m [36mimport[0m { [33mSortableList[0m } [36mfrom[0m [32m"./sortable-list"[0m;
+  [90m 7 |[0m [36mimport[0m { [33mSortableItem[0m } [36mfrom[0m [32m"./sortable-item"[0m;
+[31m[1m>[0m [90m 8 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 9 |[0m
+  [90m10 |[0m [36mexport[0m [36mfunction[0m [33mProjectsSection[0m() {
+  [90m11 |[0m   [36mconst[0m { portfolio, updateField } = useEditor();
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/projects-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/projects-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/skills-section.tsx:8:1
+Module not found: Can't resolve '@dnd-kit/utilities'
+  [90m 6 |[0m [36mimport[0m { [33mSortableList[0m } [36mfrom[0m [32m"./sortable-list"[0m;
+  [90m 7 |[0m [36mimport[0m { [33mSortableItem[0m } [36mfrom[0m [32m"./sortable-item"[0m;
+[31m[1m>[0m [90m 8 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 9 |[0m
+  [90m10 |[0m [36mexport[0m [36mfunction[0m [33mSkillsSection[0m() {
+  [90m11 |[0m   [36mconst[0m { portfolio, updateField } = useEditor();
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/skills-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/skills-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./src/components/editor/social-section.tsx:9:1
+Module not found: Can't resolve '@dnd-kit/utilities'
+  [90m 7 |[0m [36mimport[0m { [33mSortableList[0m } [36mfrom[0m [32m"./sortable-list"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mSortableItem[0m } [36mfrom[0m [32m"./sortable-item"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mCSS[0m } [36mfrom[0m [32m"@dnd-kit/utilities"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mexport[0m [36mfunction[0m [33mSocialSection[0m() {
+  [90m12 |[0m   [36mconst[0m { portfolio, updateField } = useEditor();
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/editor/social-section.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component Browser]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/editor/social-section.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Client Component SSR]
+    ./app/dashboard/portfolio/[id]/edit/editor-content.tsx [Server Component]
+    ./app/dashboard/portfolio/[id]/edit/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (./src/components/editor/theme-selector.tsx:188:8)
+    at <unknown> (./src/components/editor/sortable-list.tsx:4:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/sortable-item.tsx:4:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/sortable-list.tsx:13:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/achievements-section.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/certifications-section.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/education-section.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/experience-section.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/projects-section.tsx:8:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/skills-section.tsx:8:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./src/components/editor/social-section.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+ ELIFECYCLE  Command failed with exit code 1.

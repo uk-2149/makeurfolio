@@ -85,6 +85,7 @@ export function EditorContent() {
           if (rect.top >= 0 && rect.top <= 300) {
             setActiveSection(section);
             break;
+          }
           // Calculate distance from the top of the scrollable container
           const relativeTop = rect.top - containerRect.top;
           
