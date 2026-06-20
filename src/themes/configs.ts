@@ -91,6 +91,21 @@ export const themeConfigs: Record<string, ThemeConfig> = {
       fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif",
     },
   },
+  "wise": {
+    id: "wise",
+    colors: {
+      canvas: "#e8ebe6",
+      surface: "#ffffff",
+      surfaceElevated: "#ffffff",
+      border: "rgba(14, 15, 12, 0.05)",
+      ink: "#0e0f0c",
+      mute: "#868685",
+      primary: "#9fe870",
+    },
+    typography: {
+      fontFamily: "ui-sans-serif, system-ui, sans-serif",
+    },
+  },
 };
 
 export const DEFAULT_THEME_CONFIG = themeConfigs["minimal-editorial"];

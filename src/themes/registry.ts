@@ -19,6 +19,7 @@ import LinearTheme from "./linear";
 import StripeTheme from "./stripe";
 import RaycastTheme from "./raycast";
 import NotionTheme from "./notion";
+import WiseTheme from "./wise";
 
 export const themeRegistry: Record<string, ComponentType<PortfolioThemeProps>> = {
   "minimal-editorial": MinimalEditorialTheme,
@@ -28,6 +29,7 @@ export const themeRegistry: Record<string, ComponentType<PortfolioThemeProps>> =
   "stripe": StripeTheme,
   "raycast": RaycastTheme,
   "notion": NotionTheme,
+  "wise": WiseTheme,
 };
 
 export const DEFAULT_THEME_ID = "minimal-editorial";
