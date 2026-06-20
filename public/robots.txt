@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://makeurfolio.com
+
+# Sitemaps
+Sitemap: https://makeurfolio.com/sitemap.xml
