@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/src/lib/prisma";
-import { themeRegistry, DEFAULT_THEME_ID } from "@/src/themes/registry";
 import { getPortfolioUrl } from "@/src/lib/portfolio-url";
 import { LivePortfolioRenderer } from "@/src/components/portfolio/live-portfolio-renderer";
 
@@ -50,12 +49,80 @@ export async function generateMetadata({ params }: PortfolioPageProps): Promise<
       canonical: url,
     },
     openGraph: {
+      type: "profile",
+      locale: "en_US",
+      url,
+      siteName: "makeurfolio",
       title,
       description,
-      url,
-      type: "website",
+      ...(portfolio.avatarUrl && {
+        images: [
+          {
+            url: portfolio.avatarUrl,
+            width: 400,
+            height: 400,
+            alt: `${portfolio.fullName || portfolio.name}'s profile picture`,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      ...(portfolio.avatarUrl && { images: [portfolio.avatarUrl] }),
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
+}
+
+// Build JSON-LD Person structured data from portfolio
+function buildPersonJsonLd(portfolio: NonNullable<Awaited<ReturnType<typeof getPortfolio>>>) {
+  const url = getPortfolioUrl(portfolio.slug);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsonLd: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: portfolio.fullName || portfolio.name,
+    url,
+    ...(portfolio.headline && { jobTitle: portfolio.headline }),
+    ...(portfolio.bio && { description: portfolio.bio }),
+    ...(portfolio.email && { email: portfolio.email }),
+    ...(portfolio.location && {
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: portfolio.location,
+      },
+    }),
+    ...(portfolio.avatarUrl && { image: portfolio.avatarUrl }),
+  };
+
+  // Add social/sameAs links from the socialLinks relation
+  const sameAs = portfolio.socialLinks
+    .filter((link) => link.visible && link.url)
+    .map((link) => link.url);
+  if (sameAs.length > 0) jsonLd.sameAs = sameAs;
+
+  // Add current work organization
+  const currentJob = portfolio.experiences.find((e) => e.currentlyWorking);
+  if (currentJob?.company) {
+    jsonLd.worksFor = {
+      "@type": "Organization",
+      name: currentJob.company,
+    };
+  }
+
+  // Add skills as knowsAbout
+  const skillNames = portfolio.skills.map((s) => s.name);
+  if (skillNames.length > 0) {
+    jsonLd.knowsAbout = skillNames;
+  }
+
+  return jsonLd;
 }
 
 export default async function PortfolioPage({ params, searchParams }: PortfolioPageProps) {
@@ -68,5 +135,16 @@ export default async function PortfolioPage({ params, searchParams }: PortfolioP
     notFound();
   }
 
-  return <LivePortfolioRenderer initialPortfolio={portfolio} isEditMode={isEditMode} />;
+  const personJsonLd = buildPersonJsonLd(portfolio);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+      />
+      <LivePortfolioRenderer initialPortfolio={portfolio} isEditMode={isEditMode} />
+    </>
+  );
 }
+
