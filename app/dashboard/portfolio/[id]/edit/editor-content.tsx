@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, RotateCcw, Loader2, ExternalLink, Trash2, AlertTriangle, MonitorPlay, FileText } from "lucide-react";
 import { useEditor } from "@/src/components/editor/editor-context";
 import { EditorSidebar } from "@/src/components/editor/sidebar";
+import { UrlSection } from "@/src/components/editor/url-section";
 import { ProfileSection } from "@/src/components/editor/profile-section";
 import { SocialSection } from "@/src/components/editor/social-section";
 import { SEOSection } from "@/src/components/editor/seo-section";
@@ -23,6 +24,7 @@ import { getPortfolioUrl } from "@/src/lib/portfolio-url";
 export function EditorContent() {
   const { 
     portfolio, 
+    initialPortfolio,
     isLoading, 
     isSaving, 
     hasUnsavedChanges, 
@@ -67,7 +69,7 @@ export function EditorContent() {
     
     const handleScroll = () => {
       const sections = [
-        "profile", "social", "experience", "education", 
+        "url", "profile", "social", "experience", "education", 
         "skills", "projects", "certifications", "achievements", "seo"
       ];
       
@@ -226,6 +228,10 @@ export function EditorContent() {
 
             {/* Main Form Content */}
             <main className="flex-1 space-y-12 order-3 lg:order-2 max-w-3xl">
+              <div id="section-url" className="scroll-mt-8">
+                  <UrlSection />
+              </div>
+
               <div id="section-profile" className="scroll-mt-8">
                   <ProfileSection />
               </div>
@@ -296,7 +302,7 @@ export function EditorContent() {
         </div>
       ) : (
         <div className="flex-1 w-full bg-card-bg relative z-10">
-          <LivePreviewIframe slug={portfolio.slug} />
+          <LivePreviewIframe slug={initialPortfolio?.slug || portfolio.slug} />
         </div>
       )}
 

@@ -10,7 +10,8 @@ import {
   FolderGit2, 
   Award, 
   Trophy,
-  Search
+  Search,
+  Globe
 } from "lucide-react";
 
 interface SidebarProps {
@@ -20,6 +21,7 @@ interface SidebarProps {
 
 export function EditorSidebar({ activeSection, setActiveSection }: SidebarProps) {
   const sections = [
+    { id: "url", label: "URL", icon: <Globe className="w-4 h-4" /> },
     { id: "profile", label: "Profile", icon: <User className="w-4 h-4" /> },
     { id: "social", label: "Social Links", icon: <LinkIcon className="w-4 h-4" /> },
     { id: "experience", label: "Experience", icon: <Briefcase className="w-4 h-4" /> },

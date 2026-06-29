@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 interface EditorContextType {
   portfolio: any | null; // using any for now to handle nested relations
+  initialPortfolio: any | null;
   isLoading: boolean;
   isSaving: boolean;
   hasUnsavedChanges: boolean;
@@ -174,6 +175,7 @@ export function EditorProvider({
     <EditorContext.Provider 
       value={{ 
         portfolio: formData, 
+        initialPortfolio: initialData,
         isLoading, 
         isSaving, 
         hasUnsavedChanges, 
