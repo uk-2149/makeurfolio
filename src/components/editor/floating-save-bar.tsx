@@ -9,7 +9,19 @@ import { useEditor } from "./editor-context";
  * the editor page without scrolling back to the top header.
  */
 export function FloatingSaveBar() {
-  const { hasUnsavedChanges, isSaving, saveChanges, discardChanges } = useEditor();
+  const { hasUnsavedChanges, isSaving, saveBlockers, saveChanges, discardChanges } = useEditor();
+
+  const blockerReasons = Object.values(saveBlockers);
+  const isBlocked = blockerReasons.length > 0;
+  const isSaveDisabled = isSaving || isBlocked;
+  
+  // Determine what text to show on the save button
+  let saveText = "Save Changes";
+  if (isSaving) {
+    saveText = "Saving…";
+  } else if (isBlocked) {
+    saveText = blockerReasons[0];
+  }
 
   return (
     <div
@@ -49,11 +61,11 @@ export function FloatingSaveBar() {
         {/* Save */}
         <button
           onClick={saveChanges}
-          disabled={isSaving}
+          disabled={isSaveDisabled}
           className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
           style={{
-            background: isSaving ? "rgba(255,255,255,0.15)" : "#ffffff",
-            color: isSaving ? "rgba(255,255,255,0.5)" : "#09090b",
+            background: isSaving ? "rgba(255,255,255,0.15)" : (isBlocked ? "rgba(239, 68, 68, 0.15)" : "#ffffff"),
+            color: isSaving ? "rgba(255,255,255,0.5)" : (isBlocked ? "rgba(239, 68, 68, 0.9)" : "#09090b"),
           }}
         >
           {isSaving ? (
@@ -61,7 +73,7 @@ export function FloatingSaveBar() {
           ) : (
             <Save className="w-3.5 h-3.5" />
           )}
-          {isSaving ? "Saving…" : "Save Changes"}
+          {saveText}
         </button>
       </div>
     </div>

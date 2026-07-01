@@ -4,9 +4,13 @@
 // Calls Gemini with structured output to generate a NormalizedProfile.
 // Validates output with Zod. Retries up to 2 times on parse failure.
 // Never returns unvalidated AI output.
+//
+// Uses the GeminiProvider for automatic API key failover. The provider
+// handles retryable API errors (429, 5xx, timeouts). This service only
+// retries Zod schema validation failures.
 // --------------------------------------------------------------------------
 
-import { gemini } from "@/src/lib/gemini";
+import { geminiProvider } from "@/src/lib/gemini-provider";
 import { GeminiError, ValidationError } from "@/src/lib/errors";
 import { logger } from "@/src/lib/logger";
 import {
@@ -16,9 +20,9 @@ import {
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompts";
 import type { GithubSummary } from "@/src/modules/github/github.types";
 import type { OnProgressCallback } from "../generation/generation.types";
+import type { GenerationContext } from "../generation/generation-context";
 
 const SERVICE = "ProfileGenerator";
-const GEMINI_MODEL = "gemini-2.5-flash";
 const MAX_RETRIES = 2;
 
 interface GenerateProfileInput {
@@ -31,9 +35,11 @@ interface GenerateProfileInput {
  *
  * Uses Gemini structured output with Zod validation.
  * Retries up to MAX_RETRIES times on validation failure.
+ * API key failover is handled transparently by the GeminiProvider.
  */
 export async function generateProfile(
   input: GenerateProfileInput,
+  context: GenerationContext,
   onProgress?: OnProgressCallback
 ): Promise<NormalizedProfile> {
   if (!input.githubSummary && !input.resumeText) {
@@ -45,6 +51,7 @@ export async function generateProfile(
   logger.info(SERVICE, "Starting profile generation...", {
     hasGithub: !!input.githubSummary,
     hasResume: !!input.resumeText,
+    requestId: context.requestId,
   });
   logger.time("gemini-generation");
 
@@ -60,14 +67,13 @@ export async function generateProfile(
       await onProgress?.(`Building developer profile... (Attempt ${attempt})`, "Gemini analyzing experience", 65);
       logger.info(SERVICE, `Gemini call attempt ${attempt}/${MAX_RETRIES + 1}`);
 
-      const response = await gemini.models.generateContent({
-        model: GEMINI_MODEL,
+      const response = await geminiProvider.executeWithFailover({
+        model: context.model,
         contents: userPrompt,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-          temperature: 0.2,
-          responseMimeType: "application/json",
-        },
+        systemInstruction: SYSTEM_PROMPT,
+        temperature: 0.2,
+        responseMimeType: "application/json",
+        userApiKey: context.userApiKey,
       });
 
       const rawText = response.text;
@@ -140,12 +146,10 @@ export async function generateProfile(
         continue;
       }
 
-      // Unexpected error — don't retry
+      // Unexpected error (including AllGeminiKeysFailedError, UserGeminiApiError)
+      // — don't retry, let it bubble up
       logger.timeEnd(SERVICE, "gemini-generation");
-      throw new GeminiError(
-        `Profile generation failed: ${lastError.message}`,
-        { attempt }
-      );
+      throw error;
     }
   }
 

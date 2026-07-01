@@ -334,6 +334,7 @@ All API endpoints return consistent, structured JSON responses. Error responses 
 ## Logging and Errors
 - `src/lib/logger.ts`: Structured console logger with timing metrics.
 - `src/lib/errors.ts`: Typed error hierarchy (`ValidationError`, `GithubError`, `GeminiError`, etc.). Route handlers map these to correct HTTP status codes.
+- Gemini Provider errors: `GeminiQuotaExceededError`, `GeminiFailoverError`, `UserGeminiApiError`, `AllGeminiKeysFailedError`. The provider never throws generic `Error` objects.
 
 ## Dependencies
 - `better-auth` for authentication (Google OAuth, Email OTP)
@@ -347,13 +348,88 @@ All API endpoints return consistent, structured JSON responses. Error responses 
 Requires the following environment variables:
 * `DATABASE_URL` (PostgreSQL connection string)
 * `GITHUB_TOKEN` (for higher rate limits)
-* `GEMINI_API_KEY` (Gemini model orchestration)
+* `GEMINI_API_KEY_1`, `GEMINI_API_KEY_2`, ... (Gemini API keys — at least one required; add more for failover)
+* `GEMINI_MODEL` (optional, defaults to `gemini-2.5-flash`)
 * `BETTER_AUTH_SECRET` (encryption keys for Better Auth)
 * `BETTER_AUTH_URL` (Base URL of application e.g. `http://localhost:3000`)
 * `GOOGLE_CLIENT_ID` (Google OAuth credential)
 * `GOOGLE_CLIENT_SECRET` (Google OAuth credential)
 
 Validated on startup via `src/lib/env.ts`.
+
+---
+
+## Gemini Provider Architecture
+
+The AI generation layer uses a multi-key provider (`src/lib/gemini-provider.ts`) for resilience against quota exhaustion, rate limits, and temporary outages.
+
+### Key Components
+
+```
+src/lib/gemini.ts              # Thin factory: createGeminiClient(apiKey)
+src/lib/gemini-provider.ts     # Multi-key orchestrator with failover
+src/lib/errors.ts              # GeminiQuotaExceededError, AllGeminiKeysFailedError, etc.
+src/modules/generation/generation-context.ts  # Request-scoped context (requestId, userApiKey, model)
+```
+
+### Multi-Key Pool
+- Keys are discovered **once at startup** by scanning `process.env` for `GEMINI_API_KEY_*` matching `/^GEMINI_API_KEY_\d+$/`.
+- Keys are sorted numerically and filtered for non-empty values.
+- One `GoogleGenAI` client is created per key via the `createGeminiClient()` factory.
+- The pool is **never re-scanned**. Adding new keys requires a restart.
+
+### Failover Chain
+When a request fails with a retryable error, the provider tries the next key with exponential backoff:
+```
+Key1 → 429 → wait 200ms → Key2 → 429 → wait 400ms → Key3 → success
+```
+- Base delay: 200ms, multiplier: 2x, cap: 800ms.
+- Timeouts failover immediately (no same-key retry).
+- Non-retryable errors (400, safety filter, invalid schema) throw immediately — no failover.
+- If all keys fail → `AllGeminiKeysFailedError` (HTTP 503, code `ALL_GEMINI_KEYS_EXHAUSTED`).
+
+### Retryable vs Non-Retryable Errors
+- **Retryable (failover)**: 429, 500, 502, 503, network timeout, ECONNRESET, RESOURCE_EXHAUSTED, UNAVAILABLE
+- **Non-retryable (immediate throw)**: 400, 401, 403, safety rejection, INVALID_ARGUMENT, PERMISSION_DENIED
+
+Error classification checks structured SDK fields (status code, error code) first; string matching is a fallback only.
+
+### Model Abstraction
+The model name defaults to `env.GEMINI_MODEL` (set via the `GEMINI_MODEL` env var, defaults to `gemini-2.5-flash`). It can be overridden per-request via `GenerationContext.model`.
+
+### GenerationContext
+A request-scoped object threaded through the entire pipeline:
+```ts
+interface GenerationContext {
+  requestId: string;     // Generation CUID for tracing
+  userApiKey?: string;   // Optional user-provided key (memory-only)
+  model?: string;        // Optional model override
+}
+```
+Built at the top of `executeGenerationSynchronously()` and passed to `generateProfile()`.
+
+### User-Provided API Key Flow
+1. User optionally submits `geminiApiKey` via the generation form.
+2. The key is trimmed and passed through `GenerationContext` — **never logged, never stored, never persisted**.
+3. The provider creates a temporary client for this key and makes a **single attempt**.
+4. On failure, the error is classified into a specific reason (`invalid_key`, `quota_exceeded`, `service_unavailable`, `unknown`).
+5. **The provider NEVER falls back to server keys** when a user key is provided.
+6. The key exists only in memory for the duration of that request.
+
+### Security Guarantees
+- User API keys are **never**: saved to database, stored in session/cookies, stored in IndexedDB/localStorage, logged (even partially), included in error messages or analytics.
+- Server API keys are referenced in logs by env var name only (e.g. `GEMINI_API_KEY_1`), never by value.
+
+### Frontend Fallback UX
+When the server returns `ALL_GEMINI_KEYS_EXHAUSTED`:
+- The generation overlay/dashboard shows a premium glassmorphism card (`src/components/gemini-key-fallback.tsx`).
+- Users can enter their own Gemini API key via a password-style input.
+- Inline validation errors display reason-specific messages.
+- "Try Again Later" dismisses the modal.
+
+### Future Extension
+- The `createGeminiClient()` factory pattern makes it straightforward to add support for additional AI providers.
+- `GenerationContext` can be extended with new cross-cutting concerns (locale, maxTokens, experimentFlags) without modifying function signatures.
 
 ---
 

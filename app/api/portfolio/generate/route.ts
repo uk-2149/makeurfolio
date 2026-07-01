@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeGenerationSynchronously } from "@/src/modules/generation/generation.service";
-import { AppError } from "@/src/lib/errors";
+import {
+  AppError,
+  AllGeminiKeysFailedError,
+  UserGeminiApiError,
+} from "@/src/lib/errors";
 
 import { auth } from "@/src/lib/auth";
 
@@ -23,6 +27,10 @@ export async function POST(request: NextRequest) {
     const portfolioName = formData.get("portfolioName") as string | null;
     const resumeFile = formData.get("resume") as File | null;
     const generationId = formData.get("generationId") as string | null;
+    const rawGeminiApiKey = formData.get("geminiApiKey") as string | null;
+
+    // Trim user API key — never log it
+    const geminiApiKey = rawGeminiApiKey?.trim() || undefined;
 
     if (!githubUsername && !resumeFile) {
       return NextResponse.json(
@@ -68,6 +76,7 @@ export async function POST(request: NextRequest) {
       portfolioName,
       userId: session.user.id,
       generationId: generationId || undefined,
+      userGeminiApiKey: geminiApiKey,
     });
 
     return NextResponse.json(
@@ -82,6 +91,36 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
+    // Handle Gemini-specific errors with dedicated response codes
+    if (error instanceof AllGeminiKeysFailedError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "ALL_GEMINI_KEYS_EXHAUSTED",
+            message: "Our AI service is temporarily unavailable due to API quota limits.",
+            statusCode: 503,
+          },
+        },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof UserGeminiApiError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "USER_GEMINI_API_ERROR",
+            message: error.message,
+            statusCode: error.statusCode,
+            reason: error.reason,
+          },
+        },
+        { status: error.statusCode }
+      );
+    }
+
     if (error instanceof AppError) {
       return NextResponse.json(
         { success: false, error: error.toJSON() },

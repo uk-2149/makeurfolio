@@ -11,6 +11,8 @@ export interface GenerationInput {
   portfolioName: string;
   userId?: string;
   generationId?: string;
+  /** Optional user-provided Gemini API key. Memory-only — never persisted. */
+  userGeminiApiKey?: string;
 }
 
 export const PROGRESS_MAP: Record<GenerationStatus, number> = {

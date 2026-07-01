@@ -72,3 +72,70 @@ export class NotFoundError extends AppError {
     });
   }
 }
+
+// --------------------------------------------------------------------------
+// Gemini Provider Errors
+// --------------------------------------------------------------------------
+
+export class GeminiQuotaExceededError extends AppError {
+  constructor(keyName: string) {
+    super(
+      `Gemini API quota exceeded for ${keyName}`,
+      429,
+      "GEMINI_QUOTA_EXCEEDED",
+      { keyName }
+    );
+  }
+}
+
+export class GeminiFailoverError extends AppError {
+  constructor(keyName: string, reason: string) {
+    super(
+      `Gemini API key ${keyName} failed: ${reason}. Failing over...`,
+      502,
+      "GEMINI_FAILOVER_ERROR",
+      { keyName, reason }
+    );
+  }
+}
+
+export type UserGeminiApiErrorReason =
+  | "invalid_key"
+  | "quota_exceeded"
+  | "service_unavailable"
+  | "unknown";
+
+export class UserGeminiApiError extends AppError {
+  public readonly reason: UserGeminiApiErrorReason;
+
+  constructor(reason: UserGeminiApiErrorReason, originalMessage: string) {
+    const statusMap: Record<UserGeminiApiErrorReason, number> = {
+      invalid_key: 400,
+      quota_exceeded: 429,
+      service_unavailable: 503,
+      unknown: 502,
+    };
+    const messageMap: Record<UserGeminiApiErrorReason, string> = {
+      invalid_key: "The API key you provided is invalid. Please check and try again.",
+      quota_exceeded: "Your API key has exceeded its quota.",
+      service_unavailable: "Gemini is temporarily unavailable. Please try again later.",
+      unknown: `Gemini request failed: ${originalMessage}`,
+    };
+
+    super(messageMap[reason], statusMap[reason], "USER_GEMINI_API_ERROR", {
+      reason,
+    });
+    this.reason = reason;
+  }
+}
+
+export class AllGeminiKeysFailedError extends AppError {
+  constructor(attemptCount: number) {
+    super(
+      `All ${attemptCount} server Gemini API keys have been exhausted.`,
+      503,
+      "ALL_GEMINI_KEYS_EXHAUSTED",
+      { attemptCount }
+    );
+  }
+}

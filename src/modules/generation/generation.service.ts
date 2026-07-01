@@ -10,6 +10,7 @@ import { logger } from "@/src/lib/logger";
 import { GenerationStatus } from "@/app/generated/prisma/client";
 import { createGeneration, updateGenerationStatus, appendGenerationLog } from "./generation.repository";
 import type { GenerationInput, OnProgressCallback } from "./generation.types";
+import type { GenerationContext } from "./generation-context";
 
 // Modules
 import { analyzeGithubProfile } from "@/src/modules/github/github-analyzer.service";
@@ -32,6 +33,12 @@ export async function executeGenerationSynchronously(
   // 1. Create generation record
   const generation = await createGeneration(input.githubUsername, input.generationId);
   const genId = generation.id;
+
+  // Build a request-scoped context for the pipeline
+  const context: GenerationContext = {
+    requestId: genId,
+    userApiKey: input.userGeminiApiKey,
+  };
 
   try {
     let githubSummary: GithubSummary | undefined;
@@ -64,7 +71,7 @@ export async function executeGenerationSynchronously(
     const profile = await generateProfile({
       githubSummary,
       resumeText: resumeResult?.text,
-    }, onProgress);
+    }, context, onProgress);
 
     // 5. Post-process AI output (Deduplicate projects)
     profile.projects = mergeProjects(profile.projects);

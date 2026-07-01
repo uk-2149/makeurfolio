@@ -10,6 +10,8 @@ interface EditorContextType {
   isSaving: boolean;
   hasUnsavedChanges: boolean;
   error: string | null;
+  saveBlockers: Record<string, string>;
+  setSaveBlocker: (id: string, reason: string | null) => void;
   updateField: (field: string, value: any) => void;
   removeArrayItem: (arrayPath: string, index: number) => void;
   saveChanges: () => Promise<void>;
@@ -30,8 +32,10 @@ export function EditorProvider({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveBlockers, setSaveBlockers] = useState<Record<string, string>>({});
 
   const hasUnsavedChanges = initialData && formData ? JSON.stringify(initialData) !== JSON.stringify(formData) : false;
+  const canSave = hasUnsavedChanges && Object.keys(saveBlockers).length === 0;
 
   // Fetch portfolio data
   useEffect(() => {
@@ -137,8 +141,20 @@ export function EditorProvider({
     return () => window.removeEventListener("message", handleMessage);
   }, [updateField, removeArrayItem]);
 
+  const setSaveBlocker = useCallback((id: string, reason: string | null) => {
+    setSaveBlockers((prev) => {
+      const next = { ...prev };
+      if (reason === null) {
+        delete next[id];
+      } else {
+        next[id] = reason;
+      }
+      return next;
+    });
+  }, []);
+
   const saveChanges = async () => {
-    if (!hasUnsavedChanges || !formData) return;
+    if (!canSave || !formData) return;
     
     try {
       setIsSaving(true);
@@ -180,6 +196,8 @@ export function EditorProvider({
         isSaving, 
         hasUnsavedChanges, 
         error, 
+        saveBlockers,
+        setSaveBlocker,
         updateField, 
         removeArrayItem,
         saveChanges, 

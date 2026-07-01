@@ -1,21 +1,18 @@
+// --------------------------------------------------------------------------
+// Gemini Client Factory
+// --------------------------------------------------------------------------
+// Thin factory for creating GoogleGenAI clients. The provider orchestrates
+// multiple clients; this file only handles instantiation.
+//
+// Future-proof: if we need to support Gemini 3, Flash, Pro, Imagen, or
+// configure custom transport options, we change this one file.
+// --------------------------------------------------------------------------
+
 import { GoogleGenAI } from "@google/genai";
 
-const globalForGemini = globalThis as unknown as {
-  gemini: GoogleGenAI | undefined;
-};
-
-function createGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not set in environment variables");
-  }
-
+/**
+ * Create a Gemini client for a given API key.
+ */
+export function createGeminiClient(apiKey: string): GoogleGenAI {
   return new GoogleGenAI({ apiKey });
-}
-
-export const gemini = globalForGemini.gemini ?? createGeminiClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForGemini.gemini = gemini;
 }

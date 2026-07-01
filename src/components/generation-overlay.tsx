@@ -5,10 +5,13 @@ import { Check, ChevronDown, ChevronUp, AlertCircle, ArrowRight, Loader2 } from 
 import { useRouter } from "next/navigation";
 import { clearActiveGenerationId, getActiveGenerationMetadata, clearActiveGenerationMetadata } from "@/src/lib/storage";
 import { getPortfolioUrl } from "@/src/lib/portfolio-url";
+import { GeminiKeyFallback } from "./gemini-key-fallback";
 
 interface GenerationOverlayProps {
   generationId: string | null;
   onClose: () => void;
+  /** Callback to retry generation with a user-provided Gemini API key */
+  onRetryWithUserKey?: (apiKey: string) => void;
 }
 
 type Status = "QUEUED" | "FETCHING_GITHUB" | "PARSING_RESUME" | "GENERATING_PROFILE" | "COMPLETED" | "FAILED";
@@ -18,7 +21,7 @@ interface LogEntry {
   message: string;
 }
 
-export function GenerationOverlay({ generationId, onClose }: GenerationOverlayProps) {
+export function GenerationOverlay({ generationId, onClose, onRetryWithUserKey }: GenerationOverlayProps) {
   const router = useRouter();
   const [status, setStatus] = useState<Status | null>(null);
   const [activityLogs, setActivityLogs] = useState<LogEntry[]>([]);
@@ -27,6 +30,11 @@ export function GenerationOverlay({ generationId, onClose }: GenerationOverlayPr
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
   const [metadata, setMetadata] = useState({ hasGithub: true, hasResume: true });
+
+  // Gemini key fallback state
+  const [showGeminiFallback, setShowGeminiFallback] = useState(false);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [fallbackError, setFallbackError] = useState<string | null>(null);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -69,12 +77,25 @@ export function GenerationOverlay({ generationId, onClose }: GenerationOverlayPr
             clearInterval(interval);
           } else if (json.data.status === "FAILED") {
             setErrorMessage(json.data.errorMessage || "An unknown error occurred.");
+
+            // Check if this is a Gemini keys exhausted error
+            if (json.data.errorCode === "ALL_GEMINI_KEYS_EXHAUSTED" || 
+                json.data.errorMessage?.includes("API keys have been exhausted")) {
+              setShowGeminiFallback(true);
+            }
+
             clearActiveGenerationId();
             clearActiveGenerationMetadata();
             clearInterval(interval);
           }
         } else {
           setErrorMessage(json.error?.message || "Generation session not found.");
+
+          // Check the response error code directly
+          if (json.error?.code === "ALL_GEMINI_KEYS_EXHAUSTED") {
+            setShowGeminiFallback(true);
+          }
+
           setStatus("FAILED");
           clearActiveGenerationId();
           clearActiveGenerationMetadata();
@@ -89,6 +110,39 @@ export function GenerationOverlay({ generationId, onClose }: GenerationOverlayPr
   }, [generationId]);
 
   if (!generationId) return null;
+
+  // ── Gemini Key Fallback ────────────────────────────────────────────
+  if (showGeminiFallback) {
+    const handleRetryWithKey = async (apiKey: string) => {
+      setFallbackLoading(true);
+      setFallbackError(null);
+
+      if (onRetryWithUserKey) {
+        // Let the parent component handle the retry
+        onRetryWithUserKey(apiKey);
+      } else {
+        // Fallback: just dismiss — parent should wire onRetryWithUserKey
+        setFallbackLoading(false);
+        setShowGeminiFallback(false);
+      }
+    };
+
+    const handleDismiss = () => {
+      setShowGeminiFallback(false);
+      clearActiveGenerationId();
+      clearActiveGenerationMetadata();
+      onClose();
+    };
+
+    return (
+      <GeminiKeyFallback
+        onRetryWithKey={handleRetryWithKey}
+        onDismiss={handleDismiss}
+        isLoading={fallbackLoading}
+        error={fallbackError}
+      />
+    );
+  }
 
   // Define High-Level Stages dynamically
   const stages = [

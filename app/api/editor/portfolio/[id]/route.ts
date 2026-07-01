@@ -222,6 +222,15 @@ export async function PATCH(
     console.error("Error updating portfolio:", error?.message || error);
     if (error?.code) console.error("Prisma Code:", error.code);
     if (error?.meta) console.error("Prisma Meta:", error.meta);
+
+    // Handle slug uniqueness race conditions
+    if (error?.code === "P2002" && error?.meta?.target?.includes("slug")) {
+      return NextResponse.json(
+        { success: false, error: { code: "SLUG_TAKEN", message: "This URL is already taken. Please choose another one.", statusCode: 409 } },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: { code: "INTERNAL_ERROR", message: "Failed to update portfolio: " + (error?.message || "Unknown"), statusCode: 500 } },
       { status: 500 }

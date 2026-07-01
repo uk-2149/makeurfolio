@@ -40,6 +40,7 @@ import { getPortfolioUrl } from "@/src/lib/portfolio-url";
 import { AuthModal } from "@/src/components/auth-modal";
 import { CreatePortfolioModal } from "@/src/components/create-portfolio-modal";
 import { GenerationOverlay } from "@/src/components/generation-overlay";
+import { GeminiKeyFallback } from "@/src/components/gemini-key-fallback";
 import { BrandLogo } from "@/src/components/brand-logo";
 
 interface Portfolio {
@@ -70,6 +71,16 @@ export default function DashboardPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
+
+  // Gemini Fallback States
+  const [showGeminiFallback, setShowGeminiFallback] = useState(false);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [fallbackError, setFallbackError] = useState<string | null>(null);
+  const [pendingGenParams, setPendingGenParams] = useState<{
+    githubUsername: string;
+    resumeFile: File | null;
+    portfolioName: string;
+  } | null>(null);
 
   // Deletion States
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -174,8 +185,11 @@ export default function DashboardPage() {
     }
   };
 
-  const executeRealGeneration = async (githubUsername: string, resumeFile: File | null, portfolioName: string) => {
+  const executeRealGeneration = async (githubUsername: string, resumeFile: File | null, portfolioName: string, userGeminiApiKey?: string) => {
     setIsCreateModalOpen(false);
+
+    // Save params for potential retry with user key
+    setPendingGenParams({ githubUsername, resumeFile, portfolioName });
 
     // 2. Set the active metadata in localStorage first
     setActiveGenerationMetadata(!!githubUsername, !!resumeFile);
@@ -192,6 +206,7 @@ export default function DashboardPage() {
     if (resumeFile) formData.append("resume", resumeFile);
     formData.append("portfolioName", portfolioName);
     formData.append("generationId", clientGenId);
+    if (userGeminiApiKey) formData.append("geminiApiKey", userGeminiApiKey);
 
     // Clear stashed state early
     await clearStashedState();
@@ -204,10 +219,33 @@ export default function DashboardPage() {
       const data = await res.json();
 
       if (!data.success) {
-        alert(data.error?.message || "Failed to start generation");
-        setGenerationId(null);
-        clearActiveGenerationId();
-        clearActiveGenerationMetadata();
+        // Detect Gemini keys exhausted — show fallback instead of alert
+        if (data.error?.code === "ALL_GEMINI_KEYS_EXHAUSTED") {
+          setGenerationId(null);
+          clearActiveGenerationId();
+          clearActiveGenerationMetadata();
+          setShowGeminiFallback(true);
+        } else if (data.error?.code === "USER_GEMINI_API_ERROR") {
+          // User key failed — show error in fallback
+          setGenerationId(null);
+          clearActiveGenerationId();
+          clearActiveGenerationMetadata();
+          setShowGeminiFallback(true);
+          if (data.error?.reason === "invalid_key") {
+            setFallbackError("Invalid API key. Please check and try again.");
+          } else if (data.error?.reason === "quota_exceeded") {
+            setFallbackError("Your API key has exceeded its quota.");
+          } else if (data.error?.reason === "service_unavailable") {
+            setFallbackError("Gemini is temporarily unavailable. Please try again later.");
+          } else {
+            setFallbackError(data.error?.message || "Failed to generate portfolio.");
+          }
+        } else {
+          alert(data.error?.message || "Failed to start generation");
+          setGenerationId(null);
+          clearActiveGenerationId();
+          clearActiveGenerationMetadata();
+        }
       }
     } catch (err) {
       console.error(err);
@@ -224,6 +262,27 @@ export default function DashboardPage() {
     clearActiveGenerationMetadata();
     // Refresh portfolio list locally instead of page reloads
     fetchPortfolios();
+  };
+
+  const handleRetryWithUserKey = async (apiKey: string) => {
+    if (!pendingGenParams) return;
+    setFallbackLoading(true);
+    setFallbackError(null);
+    setShowGeminiFallback(false);
+    await executeRealGeneration(
+      pendingGenParams.githubUsername,
+      pendingGenParams.resumeFile,
+      pendingGenParams.portfolioName,
+      apiKey
+    );
+    setFallbackLoading(false);
+  };
+
+  const handleFallbackDismiss = () => {
+    setShowGeminiFallback(false);
+    setFallbackLoading(false);
+    setFallbackError(null);
+    setPendingGenParams(null);
   };
 
   const handleDeleteClick = (id: string, name: string) => {
@@ -314,6 +373,16 @@ export default function DashboardPage() {
         <GenerationOverlay 
           generationId={generationId}
           onClose={handleCloseGenerationOverlay}
+          onRetryWithUserKey={handleRetryWithUserKey}
+        />
+      )}
+
+      {showGeminiFallback && (
+        <GeminiKeyFallback
+          onRetryWithKey={handleRetryWithUserKey}
+          onDismiss={handleFallbackDismiss}
+          isLoading={fallbackLoading}
+          error={fallbackError}
         />
       )}
 
